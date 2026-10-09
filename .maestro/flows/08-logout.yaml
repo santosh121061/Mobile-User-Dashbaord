@@ -1,0 +1,15 @@
+appId: ${MAESTRO_APP_ID}
+tags: [critical, isolated]
+---
+- runFlow: ../helpers/fresh.yaml
+- runFlow:
+    file: ../helpers/login.yaml
+    env:
+      LOGIN_EMAIL: ${MAESTRO_OWNER_EMAIL}
+- tapOn: More
+- tapOn: Sign out
+- extendedWaitUntil:
+    visible:
+      id: sign-in
+    timeout: 15000
+- assertNotVisible: Home

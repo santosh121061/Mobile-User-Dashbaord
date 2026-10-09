@@ -1,0 +1,8 @@
+src/api/generated/
+api/
+node_modules/
+dist/
+.expo/
+
+.runtime/
+docs/

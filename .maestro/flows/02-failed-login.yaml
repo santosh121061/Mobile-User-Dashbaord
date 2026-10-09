@@ -1,0 +1,19 @@
+appId: ${MAESTRO_APP_ID}
+tags: [critical, isolated]
+---
+- runFlow: ../helpers/fresh.yaml
+- tapOn:
+    id: auth-email
+- inputText: ${MAESTRO_OWNER_EMAIL}
+- tapOn:
+    id: auth-password
+- inputText: Wrong!Synthetic2026
+- hideKeyboard
+- tapOn:
+    id: sign-in
+- extendedWaitUntil:
+    visible: The supplied credentials could not be authenticated.
+    timeout: 15000
+- assertVisible:
+    id: sign-in
+- assertNotVisible: Home

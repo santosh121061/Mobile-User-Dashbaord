@@ -1,0 +1,1601 @@
+{
+    "configuration": {
+        "data": {
+            "schema_version": 1,
+            "features": {
+                "account.recovery.enabled": true,
+                "account.verification.enabled": true,
+                "account.require_verified": false,
+                "api.enabled": true
+            },
+            "branding": {
+                "name": "Knit Infotech",
+                "revision": "38f7de57e72f9bf38f3b49b966eeca110513e576e77ba48855f8f16ae90fa5de",
+                "logo": "/branding/logo?v=38f7de57e72f9bf38f3b49b966eeca110513e576e77ba48855f8f16ae90fa5de",
+                "dark_logo": "/branding/dark_logo?v=38f7de57e72f9bf38f3b49b966eeca110513e576e77ba48855f8f16ae90fa5de",
+                "compact_logo": "/branding/compact_logo?v=38f7de57e72f9bf38f3b49b966eeca110513e576e77ba48855f8f16ae90fa5de",
+                "favicon": "/branding/favicon?v=38f7de57e72f9bf38f3b49b966eeca110513e576e77ba48855f8f16ae90fa5de"
+            },
+            "version_policy": {
+                "enforced": false,
+                "status": "disabled",
+                "minimum": {
+                    "android": null,
+                    "ios": null
+                },
+                "revision": "241e389f33f4f6f9fca90b3400ac72417829df67c6ddc9dc5f2faaeb8ac24fd8"
+            }
+        }
+    },
+    "profile": {
+        "data": {
+            "id": 2,
+            "public_id": "10438223-b89a-4b4a-b951-2c6c512c1de0",
+            "name": "Fixture Administrator",
+            "first_name": "Fixture",
+            "last_name": "Administrator",
+            "phone": null,
+            "email": "fixture-admin@example.test",
+            "status": "enabled",
+            "email_verified_at": "2026-10-08T18:52:45.000000Z",
+            "avatar_available": false,
+            "email_security": true,
+            "appearance": {
+                "theme": "system",
+                "accent": "violet",
+                "direction": "ltr",
+                "navigation": "sidebar",
+                "sidebar_collapsed": false,
+                "width": "full",
+                "header": "standard",
+                "header_fixed": false,
+                "footer": "standard",
+                "footer_fixed": false,
+                "density": "comfortable",
+                "colors": []
+            }
+        }
+    },
+    "preferences": {
+        "data": {
+            "theme": "system",
+            "accent": "violet",
+            "direction": "ltr",
+            "navigation": "sidebar",
+            "sidebar_collapsed": false,
+            "width": "full",
+            "header": "standard",
+            "header_fixed": false,
+            "footer": "standard",
+            "footer_fixed": false,
+            "density": "comfortable",
+            "colors": []
+        }
+    },
+    "bootstrap": {
+        "data": {
+            "features": {
+                "account.email.enabled": true,
+                "account.recovery.enabled": true,
+                "account.verification.enabled": true,
+                "account.require_verified": false,
+                "notifications.in_app.enabled": true,
+                "notifications.security_email.enabled": true,
+                "api.enabled": true,
+                "audit.capture.enabled": true,
+                "exports.enabled": true,
+                "users.bulk.enabled": true,
+                "users.archive.enabled": true,
+                "users.avatar.enabled": true
+            },
+            "configuration_revision": "f330199661d075ece59e15e5b1d92f7388dc38bd463f1c64cc9330a2b6f2cf03",
+            "schema_version": 1,
+            "account": {
+                "id": 2,
+                "public_id": "10438223-b89a-4b4a-b951-2c6c512c1de0",
+                "name": "Fixture Administrator",
+                "email": "fixture-admin@example.test",
+                "status": "enabled",
+                "email_verified_at": "2026-10-08T18:52:45.000000Z"
+            },
+            "access_revision": 1,
+            "expires_at": "2026-10-09T06:52:45+00:00",
+            "actions": {
+                "dashboard.view": true,
+                "users.view": true,
+                "users.create": true,
+                "users.update": true,
+                "users.status": true,
+                "users.roles": true,
+                "users.archive": true,
+                "users.restore": true,
+                "users.delete": true,
+                "users.reset": true,
+                "users.sessions": true,
+                "users.export": true,
+                "users.bulk": true,
+                "roles.view": true,
+                "roles.manage": true,
+                "roles.export": true,
+                "access.manage": true,
+                "access.owners": true,
+                "settings.view": true,
+                "settings.manage": true,
+                "audit.view": true,
+                "audit.export": true,
+                "api.manage": true
+            },
+            "fields": {
+                "name": {
+                    "label": "Name",
+                    "view": true,
+                    "edit": true
+                },
+                "email": {
+                    "label": "Email",
+                    "view": true,
+                    "edit": true
+                },
+                "status": {
+                    "label": "Account status",
+                    "view": true,
+                    "edit": true
+                },
+                "roles": {
+                    "label": "Roles",
+                    "view": true,
+                    "edit": true
+                },
+                "created_at": {
+                    "label": "Created date",
+                    "view": true,
+                    "edit": true
+                },
+                "first_name": {
+                    "label": "First Name",
+                    "view": true,
+                    "edit": true
+                },
+                "last_name": {
+                    "label": "Last Name",
+                    "view": true,
+                    "edit": true
+                },
+                "phone": {
+                    "label": "Phone No.",
+                    "view": true,
+                    "edit": true
+                }
+            },
+            "modules": {
+                "dashboard": true,
+                "users": true,
+                "activity": true,
+                "roles": true,
+                "settings": true,
+                "keys": true,
+                "notifications": true,
+                "account": true
+            },
+            "session_needs_sync": false,
+            "appearance": {
+                "theme": "system",
+                "direction": "ltr"
+            },
+            "branding": {
+                "name": "Knit Infotech",
+                "revision": "38f7de57e72f9bf38f3b49b966eeca110513e576e77ba48855f8f16ae90fa5de",
+                "logo": "/branding/logo?v=38f7de57e72f9bf38f3b49b966eeca110513e576e77ba48855f8f16ae90fa5de",
+                "dark_logo": "/branding/dark_logo?v=38f7de57e72f9bf38f3b49b966eeca110513e576e77ba48855f8f16ae90fa5de",
+                "compact_logo": "/branding/compact_logo?v=38f7de57e72f9bf38f3b49b966eeca110513e576e77ba48855f8f16ae90fa5de",
+                "favicon": "/branding/favicon?v=38f7de57e72f9bf38f3b49b966eeca110513e576e77ba48855f8f16ae90fa5de"
+            }
+        }
+    },
+    "dashboard": {
+        "data": {
+            "metrics": {
+                "Total accounts": 2,
+                "Enabled": 2,
+                "Disabled": 0,
+                "Verified email": 2
+            },
+            "new_users": [
+                {
+                    "label": "Sat",
+                    "date": "03 Oct 2026",
+                    "count": 0
+                },
+                {
+                    "label": "Sun",
+                    "date": "04 Oct 2026",
+                    "count": 0
+                },
+                {
+                    "label": "Mon",
+                    "date": "05 Oct 2026",
+                    "count": 0
+                },
+                {
+                    "label": "Tue",
+                    "date": "06 Oct 2026",
+                    "count": 0
+                },
+                {
+                    "label": "Wed",
+                    "date": "07 Oct 2026",
+                    "count": 0
+                },
+                {
+                    "label": "Thu",
+                    "date": "08 Oct 2026",
+                    "count": 0
+                },
+                {
+                    "label": "Fri",
+                    "date": "09 Oct 2026",
+                    "count": 2
+                }
+            ],
+            "recent": [
+                {
+                    "id": 8,
+                    "public_id": "550ada38-7ced-4faf-aa45-8b4ade42e91f",
+                    "action": "api.login",
+                    "outcome": "success",
+                    "created_at": "2026-10-08T18:52:45.000000Z",
+                    "actor": {
+                        "public_id": "10438223-b89a-4b4a-b951-2c6c512c1de0",
+                        "name": "Fixture Administrator"
+                    }
+                }
+            ],
+            "timezone": "Asia/Kolkata",
+            "period": 7
+        }
+    },
+    "users": {
+        "data": [
+            {
+                "id": 2,
+                "public_id": "10438223-b89a-4b4a-b951-2c6c512c1de0",
+                "name": "Fixture Administrator",
+                "email": "fixture-admin@example.test",
+                "status": "enabled",
+                "roles": [],
+                "created_at": "2026-10-08T18:52:45.000000Z",
+                "first_name": "Fixture",
+                "last_name": "Administrator",
+                "phone": null
+            },
+            {
+                "id": 3,
+                "public_id": "cd7c5aaa-daed-4877-9e31-2dd63374076c",
+                "name": "Fixture Colleague",
+                "email": "fixture-colleague@example.test",
+                "status": "enabled",
+                "roles": [],
+                "created_at": "2026-10-08T18:52:45.000000Z",
+                "first_name": "Fixture",
+                "last_name": "Colleague",
+                "phone": null
+            }
+        ],
+        "meta": {
+            "current_page": 1,
+            "last_page": 1,
+            "total": 2,
+            "per_page": 30
+        }
+    },
+    "list_context": {
+        "data": {
+            "role_options": [
+                {
+                    "id": 11,
+                    "name": "Access Manager"
+                },
+                {
+                    "id": 9,
+                    "name": "Administrator"
+                },
+                {
+                    "id": 12,
+                    "name": "Read Only"
+                },
+                {
+                    "id": 10,
+                    "name": "User Manager"
+                }
+            ]
+        }
+    },
+    "target": {
+        "data": {
+            "user": {
+                "id": 3,
+                "public_id": "cd7c5aaa-daed-4877-9e31-2dd63374076c",
+                "archived": false,
+                "name": "Fixture Colleague",
+                "email": "fixture-colleague@example.test",
+                "status": "enabled",
+                "roles": [],
+                "created_at": "2026-10-08T18:52:45.000000Z",
+                "first_name": "Fixture",
+                "last_name": "Colleague",
+                "phone": null
+            },
+            "actions": {
+                "update": true,
+                "status": true,
+                "roles": true,
+                "archive": true,
+                "restore": false,
+                "delete": false,
+                "reset": true,
+                "sessions": true,
+                "access": true,
+                "owner": true
+            },
+            "action_reasons": {
+                "restore": "Unavailable under current action, field, record, feature or delegation rules.",
+                "delete": "Unavailable under current action, field, record, feature or delegation rules."
+            },
+            "role_options": [
+                {
+                    "id": 9,
+                    "name": "Administrator"
+                },
+                {
+                    "id": 10,
+                    "name": "User Manager"
+                },
+                {
+                    "id": 11,
+                    "name": "Access Manager"
+                },
+                {
+                    "id": 12,
+                    "name": "Read Only"
+                }
+            ],
+            "governance": {
+                "owner": false,
+                "locked": false,
+                "membership_change_allowed": true,
+                "lock_allowed": false
+            },
+            "avatar_available": false
+        }
+    },
+    "creation": {
+        "data": {
+            "role_options": [
+                {
+                    "id": 9,
+                    "name": "Administrator"
+                },
+                {
+                    "id": 10,
+                    "name": "User Manager"
+                },
+                {
+                    "id": 11,
+                    "name": "Access Manager"
+                },
+                {
+                    "id": 12,
+                    "name": "Read Only"
+                }
+            ],
+            "can_create_owner": true
+        }
+    },
+    "access": {
+        "data": {
+            "effects": [],
+            "scopes": [],
+            "fields": [],
+            "assigned_ids": [],
+            "revision": 1,
+            "effective": [
+                {
+                    "key": "dashboard.view",
+                    "label": "View dashboard",
+                    "allowed": false,
+                    "scopes": [],
+                    "scope_description": "",
+                    "origin": "",
+                    "reason": "No current grant or feature disabled"
+                },
+                {
+                    "key": "users.view",
+                    "label": "View users",
+                    "allowed": false,
+                    "scopes": [],
+                    "scope_description": "",
+                    "origin": "",
+                    "reason": "No current grant or feature disabled"
+                },
+                {
+                    "key": "users.create",
+                    "label": "Create users",
+                    "allowed": false,
+                    "scopes": [],
+                    "scope_description": "",
+                    "origin": "",
+                    "reason": "No current grant or feature disabled"
+                },
+                {
+                    "key": "users.update",
+                    "label": "Edit users",
+                    "allowed": false,
+                    "scopes": [],
+                    "scope_description": "",
+                    "origin": "",
+                    "reason": "No current grant or feature disabled"
+                },
+                {
+                    "key": "users.status",
+                    "label": "Enable / disable users",
+                    "allowed": false,
+                    "scopes": [],
+                    "scope_description": "",
+                    "origin": "",
+                    "reason": "No current grant or feature disabled"
+                },
+                {
+                    "key": "users.roles",
+                    "label": "Assign user roles",
+                    "allowed": false,
+                    "scopes": [],
+                    "scope_description": "",
+                    "origin": "",
+                    "reason": "No current grant or feature disabled"
+                },
+                {
+                    "key": "users.archive",
+                    "label": "Archive users",
+                    "allowed": false,
+                    "scopes": [],
+                    "scope_description": "",
+                    "origin": "",
+                    "reason": "No current grant or feature disabled"
+                },
+                {
+                    "key": "users.restore",
+                    "label": "Restore users",
+                    "allowed": false,
+                    "scopes": [],
+                    "scope_description": "",
+                    "origin": "",
+                    "reason": "No current grant or feature disabled"
+                },
+                {
+                    "key": "users.delete",
+                    "label": "Permanently delete users",
+                    "allowed": false,
+                    "scopes": [],
+                    "scope_description": "",
+                    "origin": "",
+                    "reason": "No current grant or feature disabled"
+                },
+                {
+                    "key": "users.reset",
+                    "label": "Send password reset",
+                    "allowed": false,
+                    "scopes": [],
+                    "scope_description": "",
+                    "origin": "",
+                    "reason": "No current grant or feature disabled"
+                },
+                {
+                    "key": "users.sessions",
+                    "label": "Revoke sessions",
+                    "allowed": false,
+                    "scopes": [],
+                    "scope_description": "",
+                    "origin": "",
+                    "reason": "No current grant or feature disabled"
+                },
+                {
+                    "key": "users.export",
+                    "label": "Export users",
+                    "allowed": false,
+                    "scopes": [],
+                    "scope_description": "",
+                    "origin": "",
+                    "reason": "No current grant or feature disabled"
+                },
+                {
+                    "key": "users.bulk",
+                    "label": "Bulk user actions",
+                    "allowed": false,
+                    "scopes": [],
+                    "scope_description": "",
+                    "origin": "",
+                    "reason": "No current grant or feature disabled"
+                },
+                {
+                    "key": "roles.view",
+                    "label": "View roles",
+                    "allowed": false,
+                    "scopes": [],
+                    "scope_description": "",
+                    "origin": "",
+                    "reason": "No current grant or feature disabled"
+                },
+                {
+                    "key": "roles.manage",
+                    "label": "Manage role grants",
+                    "allowed": false,
+                    "scopes": [],
+                    "scope_description": "",
+                    "origin": "",
+                    "reason": "No current grant or feature disabled"
+                },
+                {
+                    "key": "roles.export",
+                    "label": "Export roles",
+                    "allowed": false,
+                    "scopes": [],
+                    "scope_description": "",
+                    "origin": "",
+                    "reason": "No current grant or feature disabled"
+                },
+                {
+                    "key": "access.manage",
+                    "label": "Manage direct access",
+                    "allowed": false,
+                    "scopes": [],
+                    "scope_description": "",
+                    "origin": "",
+                    "reason": "No current grant or feature disabled"
+                },
+                {
+                    "key": "access.owners",
+                    "label": "Manage governance owners",
+                    "allowed": false,
+                    "scopes": [],
+                    "scope_description": "",
+                    "origin": "",
+                    "reason": "No current grant or feature disabled"
+                },
+                {
+                    "key": "settings.view",
+                    "label": "View system settings",
+                    "allowed": false,
+                    "scopes": [],
+                    "scope_description": "",
+                    "origin": "",
+                    "reason": "No current grant or feature disabled"
+                },
+                {
+                    "key": "settings.manage",
+                    "label": "Manage system settings",
+                    "allowed": false,
+                    "scopes": [],
+                    "scope_description": "",
+                    "origin": "",
+                    "reason": "No current grant or feature disabled"
+                },
+                {
+                    "key": "audit.view",
+                    "label": "View activity",
+                    "allowed": false,
+                    "scopes": [],
+                    "scope_description": "",
+                    "origin": "",
+                    "reason": "No current grant or feature disabled"
+                },
+                {
+                    "key": "audit.export",
+                    "label": "Export activity",
+                    "allowed": false,
+                    "scopes": [],
+                    "scope_description": "",
+                    "origin": "",
+                    "reason": "No current grant or feature disabled"
+                },
+                {
+                    "key": "api.manage",
+                    "label": "Manage own API keys",
+                    "allowed": false,
+                    "scopes": [],
+                    "scope_description": "",
+                    "origin": "",
+                    "reason": "No current grant or feature disabled"
+                }
+            ],
+            "catalog": {
+                "dashboard.view": "View dashboard",
+                "users.view": "View users",
+                "users.create": "Create users",
+                "users.update": "Edit users",
+                "users.status": "Enable / disable users",
+                "users.roles": "Assign user roles",
+                "users.archive": "Archive users",
+                "users.restore": "Restore users",
+                "users.delete": "Permanently delete users",
+                "users.reset": "Send password reset",
+                "users.sessions": "Revoke sessions",
+                "users.export": "Export users",
+                "users.bulk": "Bulk user actions",
+                "roles.view": "View roles",
+                "roles.manage": "Manage role grants",
+                "roles.export": "Export roles",
+                "access.manage": "Manage direct access",
+                "access.owners": "Manage governance owners",
+                "settings.view": "View system settings",
+                "settings.manage": "Manage system settings",
+                "audit.view": "View activity",
+                "audit.export": "Export activity",
+                "api.manage": "Manage own API keys"
+            },
+            "field_catalog": {
+                "name": "Name",
+                "email": "Email",
+                "status": "Account status",
+                "roles": "Roles",
+                "created_at": "Created date",
+                "first_name": "First Name",
+                "last_name": "Last Name",
+                "phone": "Phone No."
+            },
+            "delegatable": {
+                "dashboard.view": [
+                    "all",
+                    "self",
+                    "created",
+                    "assigned"
+                ],
+                "users.view": [
+                    "all",
+                    "self",
+                    "created",
+                    "assigned"
+                ],
+                "users.create": [
+                    "all",
+                    "self",
+                    "created",
+                    "assigned"
+                ],
+                "users.update": [
+                    "all",
+                    "self",
+                    "created",
+                    "assigned"
+                ],
+                "users.status": [
+                    "all",
+                    "self",
+                    "created",
+                    "assigned"
+                ],
+                "users.roles": [
+                    "all",
+                    "self",
+                    "created",
+                    "assigned"
+                ],
+                "users.archive": [
+                    "all",
+                    "self",
+                    "created",
+                    "assigned"
+                ],
+                "users.restore": [
+                    "all",
+                    "self",
+                    "created",
+                    "assigned"
+                ],
+                "users.delete": [
+                    "all",
+                    "self",
+                    "created",
+                    "assigned"
+                ],
+                "users.reset": [
+                    "all",
+                    "self",
+                    "created",
+                    "assigned"
+                ],
+                "users.sessions": [
+                    "all",
+                    "self",
+                    "created",
+                    "assigned"
+                ],
+                "users.export": [
+                    "all",
+                    "self",
+                    "created",
+                    "assigned"
+                ],
+                "users.bulk": [
+                    "all",
+                    "self",
+                    "created",
+                    "assigned"
+                ],
+                "roles.view": [
+                    "all",
+                    "self",
+                    "created",
+                    "assigned"
+                ],
+                "roles.manage": [
+                    "all",
+                    "self",
+                    "created",
+                    "assigned"
+                ],
+                "roles.export": [
+                    "all",
+                    "self",
+                    "created",
+                    "assigned"
+                ],
+                "access.manage": [
+                    "all",
+                    "self",
+                    "created",
+                    "assigned"
+                ],
+                "access.owners": [
+                    "all",
+                    "self",
+                    "created",
+                    "assigned"
+                ],
+                "settings.view": [
+                    "all",
+                    "self",
+                    "created",
+                    "assigned"
+                ],
+                "settings.manage": [
+                    "all",
+                    "self",
+                    "created",
+                    "assigned"
+                ],
+                "audit.view": [
+                    "all",
+                    "self",
+                    "created",
+                    "assigned"
+                ],
+                "audit.export": [
+                    "all",
+                    "self",
+                    "created",
+                    "assigned"
+                ],
+                "api.manage": [
+                    "all",
+                    "self",
+                    "created",
+                    "assigned"
+                ]
+            },
+            "field_delegatable": {
+                "name": {
+                    "view": true,
+                    "edit": true
+                },
+                "email": {
+                    "view": true,
+                    "edit": true
+                },
+                "status": {
+                    "view": true,
+                    "edit": true
+                },
+                "roles": {
+                    "view": true,
+                    "edit": true
+                },
+                "created_at": {
+                    "view": true,
+                    "edit": true
+                },
+                "first_name": {
+                    "view": true,
+                    "edit": true
+                },
+                "last_name": {
+                    "view": true,
+                    "edit": true
+                },
+                "phone": {
+                    "view": true,
+                    "edit": true
+                }
+            },
+            "delegation": {
+                "rules": [],
+                "fields": []
+            }
+        }
+    },
+    "roles": {
+        "data": [
+            {
+                "id": 9,
+                "name": "Administrator",
+                "permissions": [
+                    {
+                        "id": 47,
+                        "name": "dashboard.view",
+                        "pivot": {
+                            "role_id": 9,
+                            "permission_id": 47
+                        }
+                    },
+                    {
+                        "id": 48,
+                        "name": "users.view",
+                        "pivot": {
+                            "role_id": 9,
+                            "permission_id": 48
+                        }
+                    },
+                    {
+                        "id": 49,
+                        "name": "users.create",
+                        "pivot": {
+                            "role_id": 9,
+                            "permission_id": 49
+                        }
+                    },
+                    {
+                        "id": 50,
+                        "name": "users.update",
+                        "pivot": {
+                            "role_id": 9,
+                            "permission_id": 50
+                        }
+                    },
+                    {
+                        "id": 51,
+                        "name": "users.status",
+                        "pivot": {
+                            "role_id": 9,
+                            "permission_id": 51
+                        }
+                    },
+                    {
+                        "id": 52,
+                        "name": "users.roles",
+                        "pivot": {
+                            "role_id": 9,
+                            "permission_id": 52
+                        }
+                    },
+                    {
+                        "id": 53,
+                        "name": "users.archive",
+                        "pivot": {
+                            "role_id": 9,
+                            "permission_id": 53
+                        }
+                    },
+                    {
+                        "id": 54,
+                        "name": "users.restore",
+                        "pivot": {
+                            "role_id": 9,
+                            "permission_id": 54
+                        }
+                    },
+                    {
+                        "id": 55,
+                        "name": "users.delete",
+                        "pivot": {
+                            "role_id": 9,
+                            "permission_id": 55
+                        }
+                    },
+                    {
+                        "id": 56,
+                        "name": "users.reset",
+                        "pivot": {
+                            "role_id": 9,
+                            "permission_id": 56
+                        }
+                    },
+                    {
+                        "id": 57,
+                        "name": "users.sessions",
+                        "pivot": {
+                            "role_id": 9,
+                            "permission_id": 57
+                        }
+                    },
+                    {
+                        "id": 58,
+                        "name": "users.export",
+                        "pivot": {
+                            "role_id": 9,
+                            "permission_id": 58
+                        }
+                    },
+                    {
+                        "id": 59,
+                        "name": "users.bulk",
+                        "pivot": {
+                            "role_id": 9,
+                            "permission_id": 59
+                        }
+                    },
+                    {
+                        "id": 60,
+                        "name": "roles.view",
+                        "pivot": {
+                            "role_id": 9,
+                            "permission_id": 60
+                        }
+                    },
+                    {
+                        "id": 61,
+                        "name": "roles.manage",
+                        "pivot": {
+                            "role_id": 9,
+                            "permission_id": 61
+                        }
+                    },
+                    {
+                        "id": 62,
+                        "name": "roles.export",
+                        "pivot": {
+                            "role_id": 9,
+                            "permission_id": 62
+                        }
+                    },
+                    {
+                        "id": 63,
+                        "name": "access.manage",
+                        "pivot": {
+                            "role_id": 9,
+                            "permission_id": 63
+                        }
+                    },
+                    {
+                        "id": 64,
+                        "name": "access.owners",
+                        "pivot": {
+                            "role_id": 9,
+                            "permission_id": 64
+                        }
+                    },
+                    {
+                        "id": 65,
+                        "name": "settings.view",
+                        "pivot": {
+                            "role_id": 9,
+                            "permission_id": 65
+                        }
+                    },
+                    {
+                        "id": 66,
+                        "name": "settings.manage",
+                        "pivot": {
+                            "role_id": 9,
+                            "permission_id": 66
+                        }
+                    },
+                    {
+                        "id": 67,
+                        "name": "audit.view",
+                        "pivot": {
+                            "role_id": 9,
+                            "permission_id": 67
+                        }
+                    },
+                    {
+                        "id": 68,
+                        "name": "audit.export",
+                        "pivot": {
+                            "role_id": 9,
+                            "permission_id": 68
+                        }
+                    },
+                    {
+                        "id": 69,
+                        "name": "api.manage",
+                        "pivot": {
+                            "role_id": 9,
+                            "permission_id": 69
+                        }
+                    }
+                ]
+            },
+            {
+                "id": 10,
+                "name": "User Manager",
+                "permissions": [
+                    {
+                        "id": 47,
+                        "name": "dashboard.view",
+                        "pivot": {
+                            "role_id": 10,
+                            "permission_id": 47
+                        }
+                    },
+                    {
+                        "id": 48,
+                        "name": "users.view",
+                        "pivot": {
+                            "role_id": 10,
+                            "permission_id": 48
+                        }
+                    },
+                    {
+                        "id": 49,
+                        "name": "users.create",
+                        "pivot": {
+                            "role_id": 10,
+                            "permission_id": 49
+                        }
+                    },
+                    {
+                        "id": 50,
+                        "name": "users.update",
+                        "pivot": {
+                            "role_id": 10,
+                            "permission_id": 50
+                        }
+                    },
+                    {
+                        "id": 51,
+                        "name": "users.status",
+                        "pivot": {
+                            "role_id": 10,
+                            "permission_id": 51
+                        }
+                    },
+                    {
+                        "id": 52,
+                        "name": "users.roles",
+                        "pivot": {
+                            "role_id": 10,
+                            "permission_id": 52
+                        }
+                    },
+                    {
+                        "id": 56,
+                        "name": "users.reset",
+                        "pivot": {
+                            "role_id": 10,
+                            "permission_id": 56
+                        }
+                    },
+                    {
+                        "id": 58,
+                        "name": "users.export",
+                        "pivot": {
+                            "role_id": 10,
+                            "permission_id": 58
+                        }
+                    },
+                    {
+                        "id": 59,
+                        "name": "users.bulk",
+                        "pivot": {
+                            "role_id": 10,
+                            "permission_id": 59
+                        }
+                    },
+                    {
+                        "id": 60,
+                        "name": "roles.view",
+                        "pivot": {
+                            "role_id": 10,
+                            "permission_id": 60
+                        }
+                    },
+                    {
+                        "id": 69,
+                        "name": "api.manage",
+                        "pivot": {
+                            "role_id": 10,
+                            "permission_id": 69
+                        }
+                    }
+                ]
+            },
+            {
+                "id": 11,
+                "name": "Access Manager",
+                "permissions": [
+                    {
+                        "id": 47,
+                        "name": "dashboard.view",
+                        "pivot": {
+                            "role_id": 11,
+                            "permission_id": 47
+                        }
+                    },
+                    {
+                        "id": 48,
+                        "name": "users.view",
+                        "pivot": {
+                            "role_id": 11,
+                            "permission_id": 48
+                        }
+                    },
+                    {
+                        "id": 52,
+                        "name": "users.roles",
+                        "pivot": {
+                            "role_id": 11,
+                            "permission_id": 52
+                        }
+                    },
+                    {
+                        "id": 60,
+                        "name": "roles.view",
+                        "pivot": {
+                            "role_id": 11,
+                            "permission_id": 60
+                        }
+                    },
+                    {
+                        "id": 61,
+                        "name": "roles.manage",
+                        "pivot": {
+                            "role_id": 11,
+                            "permission_id": 61
+                        }
+                    },
+                    {
+                        "id": 63,
+                        "name": "access.manage",
+                        "pivot": {
+                            "role_id": 11,
+                            "permission_id": 63
+                        }
+                    },
+                    {
+                        "id": 67,
+                        "name": "audit.view",
+                        "pivot": {
+                            "role_id": 11,
+                            "permission_id": 67
+                        }
+                    }
+                ]
+            },
+            {
+                "id": 12,
+                "name": "Read Only",
+                "permissions": [
+                    {
+                        "id": 47,
+                        "name": "dashboard.view",
+                        "pivot": {
+                            "role_id": 12,
+                            "permission_id": 47
+                        }
+                    },
+                    {
+                        "id": 48,
+                        "name": "users.view",
+                        "pivot": {
+                            "role_id": 12,
+                            "permission_id": 48
+                        }
+                    },
+                    {
+                        "id": 60,
+                        "name": "roles.view",
+                        "pivot": {
+                            "role_id": 12,
+                            "permission_id": 60
+                        }
+                    }
+                ]
+            }
+        ]
+    },
+    "role": {
+        "data": {
+            "id": 9,
+            "name": "Administrator",
+            "grants": [
+                "dashboard.view",
+                "users.view",
+                "users.create",
+                "users.update",
+                "users.status",
+                "users.roles",
+                "users.archive",
+                "users.restore",
+                "users.delete",
+                "users.reset",
+                "users.sessions",
+                "users.export",
+                "users.bulk",
+                "roles.view",
+                "roles.manage",
+                "roles.export",
+                "access.manage",
+                "access.owners",
+                "settings.view",
+                "settings.manage",
+                "audit.view",
+                "audit.export",
+                "api.manage"
+            ],
+            "scopes": [
+                {
+                    "name": "users.view",
+                    "scope": "all"
+                },
+                {
+                    "name": "users.create",
+                    "scope": "all"
+                },
+                {
+                    "name": "users.update",
+                    "scope": "all"
+                },
+                {
+                    "name": "users.status",
+                    "scope": "all"
+                },
+                {
+                    "name": "users.roles",
+                    "scope": "all"
+                },
+                {
+                    "name": "users.archive",
+                    "scope": "all"
+                },
+                {
+                    "name": "users.restore",
+                    "scope": "all"
+                },
+                {
+                    "name": "users.delete",
+                    "scope": "all"
+                },
+                {
+                    "name": "users.reset",
+                    "scope": "all"
+                },
+                {
+                    "name": "users.sessions",
+                    "scope": "all"
+                },
+                {
+                    "name": "users.export",
+                    "scope": "all"
+                },
+                {
+                    "name": "users.bulk",
+                    "scope": "all"
+                }
+            ],
+            "fields": [
+                {
+                    "field": "name",
+                    "can_view": true,
+                    "can_edit": true
+                },
+                {
+                    "field": "email",
+                    "can_view": true,
+                    "can_edit": true
+                },
+                {
+                    "field": "status",
+                    "can_view": true,
+                    "can_edit": true
+                },
+                {
+                    "field": "roles",
+                    "can_view": true,
+                    "can_edit": true
+                },
+                {
+                    "field": "created_at",
+                    "can_view": true,
+                    "can_edit": true
+                },
+                {
+                    "field": "first_name",
+                    "can_view": true,
+                    "can_edit": true
+                },
+                {
+                    "field": "last_name",
+                    "can_view": true,
+                    "can_edit": true
+                },
+                {
+                    "field": "phone",
+                    "can_view": true,
+                    "can_edit": true
+                }
+            ]
+        }
+    },
+    "audit": {
+        "current_page": 1,
+        "data": [
+            {
+                "id": 9,
+                "public_id": "b5b36b8f-ca14-4479-b0dc-6407a6c1cdb6",
+                "action": "http.request",
+                "subject_type": null,
+                "subject_id": null,
+                "outcome": "success",
+                "request_id": "b761f650-ee47-4ec6-ba00-2b58521855c5",
+                "ip": "127.0.0.1",
+                "metadata": {
+                    "method": "POST",
+                    "route": "api/v1/auth/login",
+                    "status": 200,
+                    "duration_ms": 154.34,
+                    "actor_public_id": null,
+                    "subject_public_id": null
+                },
+                "created_at": "2026-10-08T18:52:45.000000Z",
+                "actor": {
+                    "public_id": null,
+                    "name": null
+                },
+                "changes": []
+            },
+            {
+                "id": 8,
+                "public_id": "550ada38-7ced-4faf-aa45-8b4ade42e91f",
+                "action": "api.login",
+                "subject_type": "PersonalAccessToken",
+                "subject_id": "2",
+                "outcome": "success",
+                "request_id": "b761f650-ee47-4ec6-ba00-2b58521855c5",
+                "ip": "127.0.0.1",
+                "metadata": {
+                    "actor_public_id": "10438223-b89a-4b4a-b951-2c6c512c1de0",
+                    "subject_public_id": null
+                },
+                "created_at": "2026-10-08T18:52:45.000000Z",
+                "actor": {
+                    "public_id": "10438223-b89a-4b4a-b951-2c6c512c1de0",
+                    "name": "Fixture Administrator"
+                },
+                "changes": []
+            }
+        ],
+        "first_page_url": "http://127.0.0.1:8088/api/v1/audit?page=1",
+        "from": 1,
+        "last_page": 1,
+        "last_page_url": "http://127.0.0.1:8088/api/v1/audit?page=1",
+        "links": [
+            {
+                "url": null,
+                "label": "&laquo; Previous",
+                "page": null,
+                "active": false
+            },
+            {
+                "url": "http://127.0.0.1:8088/api/v1/audit?page=1",
+                "label": "1",
+                "page": 1,
+                "active": true
+            },
+            {
+                "url": null,
+                "label": "Next &raquo;",
+                "page": null,
+                "active": false
+            }
+        ],
+        "next_page_url": null,
+        "path": "http://127.0.0.1:8088/api/v1/audit",
+        "per_page": 25,
+        "prev_page_url": null,
+        "to": 2,
+        "total": 2
+    },
+    "inbox": {
+        "current_page": 1,
+        "data": [
+            {
+                "id": "a2df98f3-fcd5-4c95-9c1c-0ceb682bc22b",
+                "type": "App\\Notifications\\AccountNotice",
+                "notifiable_type": "App\\Models\\User",
+                "notifiable_id": 2,
+                "data": {
+                    "title": "Fixture notice",
+                    "message": "Synthetic contract data",
+                    "path": "/users/3",
+                    "schema": 1
+                },
+                "read_at": null,
+                "created_at": "2026-10-08T18:52:45.000000Z",
+                "updated_at": "2026-10-08T18:52:45.000000Z"
+            }
+        ],
+        "first_page_url": "http://127.0.0.1:8088/api/v1/notifications?page=1",
+        "from": 1,
+        "last_page": 1,
+        "last_page_url": "http://127.0.0.1:8088/api/v1/notifications?page=1",
+        "links": [
+            {
+                "url": null,
+                "label": "&laquo; Previous",
+                "page": null,
+                "active": false
+            },
+            {
+                "url": "http://127.0.0.1:8088/api/v1/notifications?page=1",
+                "label": "1",
+                "page": 1,
+                "active": true
+            },
+            {
+                "url": null,
+                "label": "Next &raquo;",
+                "page": null,
+                "active": false
+            }
+        ],
+        "next_page_url": null,
+        "path": "http://127.0.0.1:8088/api/v1/notifications",
+        "per_page": 25,
+        "prev_page_url": null,
+        "to": 1,
+        "total": 1
+    },
+    "settings": {
+        "data": {
+            "values": {
+                "branding.name": "Knit Admin",
+                "account.email.enabled": true,
+                "account.recovery.enabled": true,
+                "account.verification.enabled": true,
+                "account.require_verified": false,
+                "notifications.in_app.enabled": true,
+                "notifications.security_email.enabled": true,
+                "api.enabled": true,
+                "audit.capture.enabled": true,
+                "exports.enabled": true,
+                "users.bulk.enabled": true,
+                "users.archive.enabled": true,
+                "users.avatar.enabled": true,
+                "email.recovery.subject": "Reset your password",
+                "email.recovery.message": "Hello {name}, use the secure link to reset your {app} password. Ignore this email if you did not request it.",
+                "email.verification.subject": "Verify your email",
+                "email.verification.message": "Hello {name}, confirm your email address for {app}.",
+                "email.security.subject": "{subject}",
+                "email.security.message": "Hello {name}, {message}"
+            },
+            "defaults": {
+                "theme": "system",
+                "accent": "violet",
+                "direction": "ltr",
+                "navigation": "sidebar",
+                "sidebar_collapsed": false,
+                "width": "full",
+                "header": "standard",
+                "header_fixed": false,
+                "footer": "standard",
+                "footer_fixed": false,
+                "density": "comfortable",
+                "colors": []
+            },
+            "version": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+        }
+    },
+    "sessions": {
+        "current_page": 1,
+        "data": [
+            {
+                "id": 2,
+                "name": "Fixture phone",
+                "created_at": "2026-10-08T18:52:45.000000Z",
+                "last_used_at": "2026-10-08T18:52:45.000000Z",
+                "expires_at": "2026-10-09T06:52:45.000000Z",
+                "current": true,
+                "type": "mobile"
+            }
+        ],
+        "first_page_url": "http://127.0.0.1:8088/api/v1/profile/mobile-sessions?page=1",
+        "from": 1,
+        "last_page": 1,
+        "last_page_url": "http://127.0.0.1:8088/api/v1/profile/mobile-sessions?page=1",
+        "links": [
+            {
+                "url": null,
+                "label": "&laquo; Previous",
+                "page": null,
+                "active": false
+            },
+            {
+                "url": "http://127.0.0.1:8088/api/v1/profile/mobile-sessions?page=1",
+                "label": "1",
+                "page": 1,
+                "active": true
+            },
+            {
+                "url": null,
+                "label": "Next &raquo;",
+                "page": null,
+                "active": false
+            }
+        ],
+        "next_page_url": null,
+        "path": "http://127.0.0.1:8088/api/v1/profile/mobile-sessions",
+        "per_page": 30,
+        "prev_page_url": null,
+        "to": 1,
+        "total": 1
+    },
+    "web_sessions": {
+        "data": []
+    },
+    "keys": {
+        "data": []
+    },
+    "preference_write": {
+        "data": {
+            "theme": "dark",
+            "direction": "ltr",
+            "accent": "violet",
+            "navigation": "sidebar",
+            "width": "full",
+            "density": "comfortable",
+            "header": "standard",
+            "footer": "standard",
+            "sidebar_collapsed": false,
+            "header_fixed": false,
+            "footer_fixed": false,
+            "colors": [],
+            "timezone": "Asia/Kolkata",
+            "date_format": "d/m/Y"
+        }
+    },
+    "profile_write": {
+        "data": {
+            "id": 2,
+            "public_id": "10438223-b89a-4b4a-b951-2c6c512c1de0",
+            "name": "Fixture",
+            "first_name": "Fixture",
+            "last_name": null,
+            "phone": null,
+            "email": "fixture-admin@example.test",
+            "status": "enabled",
+            "email_verified_at": "2026-10-08T18:52:45.000000Z",
+            "avatar_available": false,
+            "email_security": true,
+            "appearance": {
+                "theme": "dark",
+                "accent": "violet",
+                "direction": "ltr",
+                "navigation": "sidebar",
+                "sidebar_collapsed": false,
+                "width": "full",
+                "header": "standard",
+                "header_fixed": false,
+                "footer": "standard",
+                "footer_fixed": false,
+                "density": "comfortable",
+                "colors": [],
+                "timezone": "Asia/Kolkata",
+                "date_format": "d/m/Y"
+            }
+        }
+    },
+    "security_email_write": {
+        "data": {
+            "email_security": false
+        }
+    }
+}

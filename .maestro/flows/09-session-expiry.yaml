@@ -1,0 +1,15 @@
+appId: ${MAESTRO_APP_ID}
+tags: [critical, isolated]
+---
+# e2e-prepare provides this synthetic15s account; normal login remains12h.
+- runFlow: ../helpers/fresh.yaml
+- runFlow:
+    file: ../helpers/login.yaml
+    env:
+      LOGIN_EMAIL: ${MAESTRO_EXPIRY_EMAIL}
+- extendedWaitUntil:
+    visible:
+      id: sign-in
+    timeout: 45000
+- assertNotVisible: Home
+- assertNotVisible: Mobile Expiry

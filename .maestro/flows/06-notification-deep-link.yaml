@@ -1,0 +1,21 @@
+appId: ${MAESTRO_APP_ID}
+tags: [critical, isolated]
+---
+- runFlow: ../helpers/fresh.yaml
+- runFlow:
+    file: ../helpers/login.yaml
+    env:
+      LOGIN_EMAIL: ${MAESTRO_VIEWER_EMAIL}
+- tapOn: More
+- tapOn: Notifications.*
+- extendedWaitUntil:
+    visible: Assigned account updated
+    timeout: 15000
+- tapOn:
+    text: Open.*
+    index: 0
+- extendedWaitUntil:
+    visible: User details
+    timeout: 15000
+- assertVisible: Mobile Account
+- assertNotVisible: mobile-account@example.test

@@ -1,0 +1,65 @@
+appId: ${MAESTRO_APP_ID}
+tags: [critical, isolated, writes]
+---
+- runFlow: ../helpers/fresh.yaml
+- runFlow:
+    file: ../helpers/login.yaml
+    env:
+      LOGIN_EMAIL: ${MAESTRO_OWNER_EMAIL}
+- tapOn: Users
+- tapOn: Add user
+- extendedWaitUntil:
+    visible: First name
+    timeout: 15000
+- tapOn: Name
+- inputText: Maestro Fixture
+- tapOn: Email
+- inputText: ${MAESTRO_CREATE_EMAIL}
+- tapOn: First name
+- inputText: Maestro
+- tapOn: Last name
+- inputText: Fixture
+- scrollUntilVisible:
+    element:
+      text: Password
+    direction: DOWN
+- tapOn: Password
+- inputText: ${MAESTRO_PASSWORD}
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      text: Save changes
+    direction: DOWN
+- tapOn: Save changes
+- runFlow: ../helpers/confirm.yaml
+- extendedWaitUntil:
+    visible: Search
+    timeout: 15000
+- tapOn: Search
+- inputText: ${MAESTRO_CREATE_EMAIL}
+- hideKeyboard
+- extendedWaitUntil:
+    visible: Maestro Fixture.*
+    timeout: 15000
+- tapOn: Maestro Fixture.*
+- tapOn: Edit user
+- scrollUntilVisible:
+    element:
+      text: Phone number
+    direction: DOWN
+- extendedWaitUntil:
+    visible: Phone number
+    timeout: 15000
+- tapOn: Phone number
+- inputText: +12025550199
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      text: Save changes
+    direction: DOWN
+- tapOn: Save changes
+- runFlow: ../helpers/confirm.yaml
+- extendedWaitUntil:
+    visible: User details
+    timeout: 15000
+- assertVisible: "+12025550199"

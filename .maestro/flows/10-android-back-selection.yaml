@@ -1,0 +1,30 @@
+appId: ${MAESTRO_APP_ID}
+tags: [critical, isolated, android]
+---
+- runFlow: ../helpers/fresh.yaml
+- runFlow:
+    file: ../helpers/login.yaml
+    env:
+      LOGIN_EMAIL: ${MAESTRO_OWNER_EMAIL}
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - tapOn: Users
+      - tapOn: Search
+      - inputText: Mobile Account
+      - hideKeyboard
+      - extendedWaitUntil:
+          visible: Mobile Account.*
+          timeout: 15000
+      - longPressOn: Mobile Account.*
+      - assertVisible: .*Selected.*
+      - back
+      - assertNotVisible: .*Selected.*
+      - assertVisible: Search
+      - tapOn: Mobile Account.*
+      - extendedWaitUntil:
+          visible: User details
+          timeout: 15000
+      - back
+      - assertVisible: Search

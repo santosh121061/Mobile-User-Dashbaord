@@ -1,0 +1,16 @@
+appId: ${MAESTRO_APP_ID}
+---
+- tapOn:
+    id: auth-email
+- inputText: ${LOGIN_EMAIL}
+- tapOn:
+    id: auth-password
+- inputText: ${MAESTRO_PASSWORD}
+- hideKeyboard
+- tapOn:
+    id: sign-in
+- extendedWaitUntil:
+    visible: Home
+    timeout: 30000
+- assertNotVisible:
+    id: sign-in

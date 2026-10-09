@@ -1,0 +1,22 @@
+appId: ${MAESTRO_APP_ID}
+tags: [critical, isolated, writes]
+---
+# e2e-prepare forces the existing queued path; bounded database worker required.
+- runFlow: ../helpers/fresh.yaml
+- runFlow:
+    file: ../helpers/login.yaml
+    env:
+      LOGIN_EMAIL: ${MAESTRO_OWNER_EMAIL}
+- tapOn: More
+- tapOn: Reports
+- tapOn: Export users
+- tapOn: Download and share
+- extendedWaitUntil:
+    visible: Queued|Processing|Ready
+    timeout: 15000
+- extendedWaitUntil:
+    visible: Ready
+    timeout: 60000
+- assertVisible: Download and share
+- assertVisible: Refresh export status
+# Sharing-sheet acceptance is an additional manual native check.

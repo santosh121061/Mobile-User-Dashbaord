@@ -1,0 +1,23 @@
+appId: ${MAESTRO_APP_ID}
+tags: [critical, isolated]
+---
+- runFlow: ../helpers/fresh.yaml
+- runFlow:
+    file: ../helpers/login.yaml
+    env:
+      LOGIN_EMAIL: ${MAESTRO_OWNER_EMAIL}
+- tapOn: Users
+- tapOn: Add user
+- extendedWaitUntil:
+    visible: Name
+    timeout: 15000
+- tapOn: Name
+- inputText: Unsaved Fixture
+- hideKeyboard
+- back
+- assertVisible: Discard changes\?
+- tapOn: Cancel
+- assertVisible: Unsaved Fixture
+- back
+- tapOn: Discard
+- assertVisible: Search

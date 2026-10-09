@@ -1,0 +1,16 @@
+appId: ${MAESTRO_APP_ID}
+---
+- extendedWaitUntil:
+    visible:
+      id: confirmation-password
+    timeout: 10000
+- tapOn:
+    id: confirmation-password
+- inputText: ${MAESTRO_PASSWORD}
+- hideKeyboard
+- tapOn:
+    id: confirm-action
+- extendedWaitUntil:
+    notVisible:
+      id: confirmation-password
+    timeout: 20000

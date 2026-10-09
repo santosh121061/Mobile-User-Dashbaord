@@ -1,0 +1,53 @@
+{
+    "push_preferences": {
+        "data": {
+            "enabled": true,
+            "provider": {
+                "provider": "expo",
+                "status": "ready",
+                "project_id": "273ade22-2ec5-4b42-90d0-42389fe17b51"
+            },
+            "current_device_registered": true
+        }
+    },
+    "push_registration": {
+        "data": {
+            "id": "01a11dd2-3804-701d-943b-75508af52cbe",
+            "registered": true
+        }
+    },
+    "push_destination": {
+        "data": {
+            "notification_id": "4f49aae4-f820-4627-92bb-2fa7b0fa9142",
+            "path": "/profile"
+        }
+    },
+    "configuration": {
+        "data": {
+            "schema_version": 1,
+            "features": {
+                "account.recovery.enabled": true,
+                "account.verification.enabled": true,
+                "account.require_verified": false,
+                "api.enabled": true
+            },
+            "branding": {
+                "name": "Knit Infotech",
+                "revision": "38f7de57e72f9bf38f3b49b966eeca110513e576e77ba48855f8f16ae90fa5de",
+                "logo": "/branding/logo?v=38f7de57e72f9bf38f3b49b966eeca110513e576e77ba48855f8f16ae90fa5de",
+                "dark_logo": "/branding/dark_logo?v=38f7de57e72f9bf38f3b49b966eeca110513e576e77ba48855f8f16ae90fa5de",
+                "compact_logo": "/branding/compact_logo?v=38f7de57e72f9bf38f3b49b966eeca110513e576e77ba48855f8f16ae90fa5de",
+                "favicon": "/branding/favicon?v=38f7de57e72f9bf38f3b49b966eeca110513e576e77ba48855f8f16ae90fa5de"
+            },
+            "version_policy": {
+                "enforced": false,
+                "status": "disabled",
+                "minimum": {
+                    "android": null,
+                    "ios": null
+                },
+                "revision": "241e389f33f4f6f9fca90b3400ac72417829df67c6ddc9dc5f2faaeb8ac24fd8"
+            }
+        }
+    }
+}

@@ -1,0 +1,22 @@
+appId: ${MAESTRO_APP_ID}
+---
+- runScript: ../support/guard.js
+- launchApp:
+    clearState: true
+# iOS reinstall may preserve this app's SecureStore. Clear it through app logout,
+# never clear the device-wide Keychain.
+- runFlow:
+    when:
+      visible: Session locked
+    commands:
+      - tapOn: Use password
+- runFlow:
+    when:
+      visible: Home
+    commands:
+      - tapOn: More
+      - tapOn: Sign out
+- extendedWaitUntil:
+    visible:
+      id: sign-in
+    timeout: 30000
