@@ -1,11 +1,11 @@
 // Browser preview session metadata is ephemeral, like its credential adapter.
 let current: string | null = null;
 export function activate(nonce: string) {
-    current = nonce;
+  current = nonce;
 }
 export function revoke() {
-    current = null;
+  current = null;
 }
 export function matches(nonce: string) {
-    return current === nonce;
+  return current === nonce;
 }

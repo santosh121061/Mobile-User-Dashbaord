@@ -31,7 +31,7 @@ export function useRead<T>(
 }
 type Page<T> = {
     data: T[];
-    meta?: { current_page: number; last_page: number };
+    meta?: { current_page: number; last_page: number; total?: number };
     current_page?: number;
     last_page?: number;
 };

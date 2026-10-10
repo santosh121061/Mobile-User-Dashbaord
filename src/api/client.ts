@@ -90,6 +90,7 @@ export class ApiError extends Error {
         public requestId: string | null,
         public code?: string,
         public retryAfter?: number,
+        public serverMessage?: string,
     ) {
         super("API request failed");
         if (status === 429) this.retryAfter ??= 60;
@@ -98,16 +99,33 @@ export class ApiError extends Error {
             this.retryAt = Date.now() + Math.max(0, retryAfter) * 1000;
     }
 }
+export class ApiTransportError extends Error {
+    constructor(
+        public reason: "network" | "timeout" | "cancelled",
+        public cause: unknown,
+    ) {
+        super("API transport failed");
+    }
+}
 export const api = createClient<paths>({
     baseUrl: apiUrl,
     fetch: async (request: Request) => {
         const abort = new AbortController();
         const cancel = () => abort.abort();
+        let timedOut = false;
         request.signal.addEventListener("abort", cancel);
         if (request.signal.aborted) cancel();
-        const timeout = setTimeout(cancel, 15000);
+        const timeout = setTimeout(() => {
+            timedOut = true;
+            cancel();
+        }, 15000);
         try {
             return await fetch(new Request(request, { signal: abort.signal }));
+        } catch (failure) {
+            throw new ApiTransportError(
+                timedOut ? "timeout" : request.signal.aborted ? "cancelled" : "network",
+                failure,
+            );
         } finally {
             clearTimeout(timeout);
             request.signal.removeEventListener("abort", cancel);
@@ -154,11 +172,13 @@ api.use({
             }
         }
         if (response.status === 401 && sent !== null && sent === credential()) unauthorized();
-        return response;
+        // This middleware observes the response without replacing it. Expo 57's
+        // native FetchResponse does not extend the global WHATWG Response class.
     },
 });
 const errorSchema = z.object({
     code: z.string().optional(),
+    message: z.string().max(4096).optional(),
     errors: z.record(z.string(), z.array(z.string())).optional(),
 });
 export function unwrap<T>(
@@ -187,6 +207,7 @@ export function unwrap<T>(
             code,
             retryAfterSeconds(result.response.headers.get("Retry-After")) ??
                 (result.response.status === 429 ? 60 : undefined),
+            parsed.success ? parsed.data.message : undefined,
         );
     }
     return schema.parse(result.data);
