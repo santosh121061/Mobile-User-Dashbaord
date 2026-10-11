@@ -9,9 +9,9 @@ tags: [critical, isolated]
 - tapOn: Users
 - tapOn: Add user
 - extendedWaitUntil:
-    visible: Name
+    visible: First name
     timeout: 15000
-- tapOn: Name
+- tapOn: First name
 - inputText: Unsaved Fixture
 - hideKeyboard
 - back

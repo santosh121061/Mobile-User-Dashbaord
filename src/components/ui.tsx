@@ -29,7 +29,8 @@ import {
   ChevronRight,
 } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { CanvasTint, GradientFill } from "./gradient";
+import { CanvasTint } from "./gradient";
+const ActionArea = React.createContext<"body" | "dock">("body");
 export function Label({
   children,
   tone = "primary",
@@ -67,7 +68,7 @@ export function Label({
             ? -0.75
             : size === "title" || size === "h2"
               ? -0.3
-              : 0,
+              : -typography.fontSize * 0.01,
           fontSize: typography.fontSize,
           lineHeight: typography.lineHeight,
           fontFamily: optical
@@ -102,15 +103,15 @@ export function Screen({
   header?: React.ReactNode;
 }>) {
   const { colors } = useTheme();
-  const { width, height } = useWindowDimensions();
+  const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const content = {
     width: "100%" as const,
-    maxWidth: width >= 840 && height >= 480 ? 1080 : width >= 600 ? 740 : 760,
+    maxWidth: 680,
     alignSelf: "center" as const,
-    paddingHorizontal: width < 600 ? 16 : 24,
-    paddingTop: width < 600 ? 12 : 16,
-    paddingBottom: width < 600 ? 24 : 30,
+    paddingHorizontal: width < 370 ? 12 : width < 600 ? 16 : 24,
+    paddingTop: width < 370 ? 12 : width < 600 ? 16 : 22,
+    paddingBottom: width < 370 ? 22 : width < 600 ? 28 : 32,
     gap: 12,
     ...contentStyle,
   } satisfies ViewStyle;
@@ -159,11 +160,11 @@ export function Screen({
         <View
           style={{
             paddingHorizontal: width < 600 ? 16 : 24,
-            paddingTop: 12,
-            paddingBottom: (width < 600 ? 22 : 20) + insets.bottom,
+            paddingTop: 8,
+            paddingBottom: 14 + insets.bottom,
             borderTopWidth: 1,
-            borderColor: colors.border + "BF",
-            backgroundColor: colors.canvas + "DE",
+            borderColor: colors.border,
+            backgroundColor: colors.canvas,
           }}
         >
           <View
@@ -174,7 +175,7 @@ export function Screen({
               gap: 10,
             }}
           >
-            {footer}
+            <ActionArea.Provider value="dock">{footer}</ActionArea.Provider>
           </View>
         </View>
       )}
@@ -184,25 +185,44 @@ export function Screen({
 export function Card({
   children,
   style,
-}: React.PropsWithChildren<{ style?: ViewStyle }>) {
-  const { colors, dark } = useTheme();
+  heading,
+  formSection = false,
+}: React.PropsWithChildren<{
+  style?: ViewStyle;
+  heading?: string;
+  formSection?: boolean;
+}>) {
+  const { colors } = useTheme();
+  const { width } = useWindowDimensions();
   return (
     <View
       style={[
         {
           backgroundColor: colors.surface,
-          padding: 17,
-          borderRadius: 20,
+          padding: formSection && width < 370 ? 14 : 15,
+          borderRadius: formSection && width < 370 ? 13 : 14,
           borderWidth: 1,
-          borderColor: colors.border + "A6",
+          borderColor: colors.border,
           gap: 12,
-          boxShadow: dark
-            ? "0px 3px 18px rgba(0,0,0,0.062745)"
-            : "0px 3px 16px rgba(49,88,148,0.023529)",
         },
         style,
       ]}
     >
+      {heading && (
+        <Label
+          size="bodyMedium"
+          style={{
+            fontSize: width < 370 ? 14 : 15,
+            lineHeight: width < 370 ? 20 : 21,
+            paddingBottom: 11,
+            marginBottom: 2,
+            borderBottomWidth: 1,
+            borderColor: colors.border,
+          }}
+        >
+          {heading}
+        </Label>
+      )}
       {children}
     </View>
   );
@@ -224,7 +244,7 @@ export function Button({
   onPress: () => void;
   disabled?: boolean;
   loading?: boolean;
-  variant?: "primary" | "secondary" | "danger" | "tertiary";
+  variant?: "primary" | "secondary" | "outline" | "danger" | "tertiary";
   testID?: string;
   icon?: React.ReactNode;
   iconPosition?: "before" | "after";
@@ -232,70 +252,84 @@ export function Button({
   style?: ViewStyle;
   displayLabel?: string;
 }) {
-  const { colors } = useTheme();
+  const { colors, dark } = useTheme();
+  const { width } = useWindowDimensions();
+  const actionArea = React.useContext(ActionArea);
   return (
     <Pressable
       testID={testID}
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{
-        disabled: disabled || loading,
+        disabled: !!(disabled || loading),
         busy: loading,
       }}
       onPress={onPress}
       disabled={disabled || loading}
       style={({ pressed }) => ({
-        minHeight: variant === "tertiary" ? (compact ? 40 : 44) : 50,
+        minHeight: actionArea === "dock" && width >= 370 ? 51 : 48,
         minWidth: 48,
-        paddingVertical: variant === "tertiary" ? 8 : 13,
-        paddingHorizontal: variant === "tertiary" ? 2 : 18,
-        borderRadius: 16,
+        paddingVertical: variant === "tertiary" ? 8 : 12,
+        paddingHorizontal: variant === "tertiary" ? (compact ? 2 : 8) : 15,
+        borderRadius: actionArea === "dock" ? 12 : 11,
         flexDirection: "row",
         gap: 8,
         overflow: "hidden",
         opacity: disabled || loading ? 0.45 : 1,
-        transform: [{ scale: pressed ? 0.985 : 1 }],
+        transform: [{ scale: pressed ? 0.975 : 1 }],
         alignItems: "center",
         justifyContent: "center",
         backgroundColor:
           variant === "tertiary"
             ? "transparent"
             : variant === "secondary"
-              ? colors.brand.primarySoft
-              : variant === "danger"
-                ? pressed
-                  ? colors.status.dangerPressed
-                  : colors.status.danger
-                : pressed
-                  ? colors.brand.primaryPressed
-                  : colors.brand.primaryFill,
-        borderWidth: variant === "secondary" ? 1 : 0,
-        borderColor: colors.brand.primarySoft,
+              ? "#EEF4FF"
+              : variant === "outline"
+                ? colors.surface
+                : variant === "danger"
+                  ? pressed
+                    ? colors.status.dangerPressed
+                    : colors.status.danger
+                  : pressed
+                    ? "#0E4FCC"
+                    : "#155EEF",
+        borderWidth: 1,
+        borderColor:
+          variant === "secondary"
+            ? "#DCE8FF"
+            : variant === "outline"
+              ? dark
+                ? "#3A5578"
+                : "#D7E0EA"
+              : "transparent",
         boxShadow:
           variant === "primary"
-            ? "0px 5px 14px rgba(20,107,255,0.109804)"
+            ? "0px 4px 10px rgba(21,94,239,0.18)"
             : undefined,
         ...style,
       })}
     >
       {({ pressed }) => {
         const foreground =
-          variant === "secondary" || variant === "tertiary"
-            ? colors.brand.primary
+          variant === "secondary" ||
+          variant === "tertiary" ||
+          variant === "outline"
+            ? variant === "secondary"
+              ? "#155EEF"
+              : variant === "outline"
+                ? dark
+                  ? colors.text.primary
+                  : "#31445E"
+                : "#5B6F89"
             : variant === "danger"
               ? pressed
                 ? colors.status.dangerPressedText
                 : colors.status.dangerButtonText
-              : pressed
-                ? colors.brand.primaryPressedText
-                : colors.brand.primaryText;
+              : "#FFFFFF";
         return loading ? (
           <ActivityIndicator color={foreground} />
         ) : (
           <>
-            {variant === "primary" && (
-              <GradientFill colors={["#1762EA", colors.brand.primaryFill]} />
-            )}
             {icon && iconPosition === "before" && (
               <View style={{ zIndex: 1 }}>{icon}</View>
             )}
@@ -303,6 +337,16 @@ export function Button({
               size={variant === "tertiary" ? "captionMedium" : "button"}
               style={{
                 color: foreground,
+                fontFamily: "Inter_650DemiBold15",
+                letterSpacing: -0.15,
+                fontSize: compact
+                  ? width <= 330
+                    ? 10
+                    : 11
+                  : width <= 330
+                    ? 12
+                    : 15,
+                lineHeight: compact ? 16 : 22,
               }}
             >
               {displayLabel ?? label}
@@ -344,6 +388,7 @@ export const Input = forwardRef<
   ref,
 ) {
   const { colors, dark } = useTheme();
+  const { width } = useWindowDimensions();
   const [focused, setFocused] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const automaticPassword = !!props.secureTextEntry && !trailing;
@@ -368,7 +413,16 @@ export const Input = forwardRef<
   return (
     <View style={{ gap: 7, ...containerStyle }}>
       {!hideLabel && (
-        <Label tone="secondary" size="captionMedium">
+        <Label
+          tone="secondary"
+          size="captionMedium"
+          style={{
+            fontFamily: "Inter_650DemiBold",
+            fontSize: 11,
+            lineHeight: 16,
+            letterSpacing: width < 370 ? 0.11 : 0.44,
+          }}
+        >
           {label}
           {required && (
             <Text style={{ color: colors.status.dangerText }}> *</Text>
@@ -379,24 +433,21 @@ export const Input = forwardRef<
         style={{
           flexDirection: "row",
           alignItems: "center",
-          minHeight: hideLabel ? 50 : 54,
-          borderRadius: hideLabel ? 16 : 13,
+          minHeight: hideLabel || width < 370 ? 48 : 50,
+          borderRadius: 11,
           borderWidth: 1,
           borderColor: error
-            ? colors.status.danger
+            ? "#D96A7F"
             : focused
               ? colors.focus
-              : hideLabel
-                ? colors.border + "80"
-                : dark
-                  ? "#344A6B"
-                  : "#D7E2F2",
-          backgroundColor: hideLabel
-            ? dark
-              ? "#202F49"
-              : "#F0F5FC"
-            : colors.inputSurface,
-          paddingHorizontal: hideLabel ? 12 : 13,
+              : colors.border,
+          backgroundColor: colors.surface,
+          boxShadow: error
+            ? "0px 0px 0px 3px rgba(217,106,127,0.08)"
+            : focused
+              ? "0px 0px 0px 3px rgba(21,94,239,0.11)"
+              : undefined,
+          paddingHorizontal: width < 370 || hideLabel ? 12 : 14,
           gap: 10,
           overflow: "hidden",
         }}
@@ -420,15 +471,15 @@ export const Input = forwardRef<
           }}
           style={[
             {
-              minHeight: hideLabel ? 48 : 52,
+              minHeight: hideLabel || width < 370 ? 46 : 48,
               flex: 1,
               minWidth: 0,
               color: colors.text.primary,
               backgroundColor: "transparent",
               paddingHorizontal: 0,
-              paddingVertical: hideLabel ? 12 : 14,
-              fontFamily: "Inter_400Regular15",
-              fontSize: 15,
+              paddingVertical: hideLabel ? 11 : 12,
+              fontFamily: "Inter_400Regular",
+              fontSize: width < 370 ? 13 : 14,
               lineHeight: 24,
               includeFontPadding: false,
             },
@@ -465,14 +516,21 @@ export const Input = forwardRef<
       {!!error && (
         <Label
           accessibilityLiveRegion="polite"
-          style={{ color: colors.status.dangerText }}
+          style={{ color: "#B4233F", fontSize: 10, lineHeight: 15 }}
           size="caption"
         >
           {error}
         </Label>
       )}
       {!!help && (
-        <Label size="caption" tone="secondary">
+        <Label
+          size="caption"
+          tone="secondary"
+          style={{
+            fontSize: width < 370 ? 10 : 11,
+            lineHeight: width < 370 ? 14 : 16,
+          }}
+        >
           {help}
         </Label>
       )}
@@ -483,41 +541,63 @@ export function Chip({
   label,
   selected,
   onPress,
+  disabled = false,
+  hint,
 }: {
   label: string;
   selected: boolean;
   onPress: () => void;
+  disabled?: boolean;
+  hint?: string;
 }) {
-  const { colors } = useTheme();
+  const { colors, dark } = useTheme();
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityState={{ selected }}
+      accessibilityState={{ selected, disabled }}
+      accessibilityHint={hint}
+      disabled={disabled}
       onPress={onPress}
       style={{
         minHeight: 48,
         minWidth: 48,
         justifyContent: "center",
         paddingHorizontal: 0,
-        marginEnd: 7,
+        marginEnd: 5,
+        opacity: disabled ? 0.45 : 1,
       }}
     >
       <View
         style={{
-          minHeight: 42,
+          minHeight: 34,
           justifyContent: "center",
-          paddingHorizontal: 16,
-          paddingVertical: 10,
-          borderRadius: 15,
+          paddingHorizontal: 12,
+          paddingVertical: 7,
+          borderRadius: 9,
+          borderWidth: 1,
+          borderColor: selected
+            ? dark
+              ? "#395384"
+              : "#155EEF"
+            : "transparent",
           backgroundColor: selected
-            ? colors.brand.primarySoft
-            : colors.surfaceMuted,
+            ? dark
+              ? colors.brand.primarySoft
+              : "#155EEF"
+            : "transparent",
+          boxShadow: selected ? "0px 3px 7px rgba(21,94,239,0.16)" : undefined,
         }}
       >
         <Label
           size="captionMedium"
           style={{
-            color: selected ? colors.brand.primary : colors.text.secondary,
+            color: selected
+              ? "#FFFFFF"
+              : dark
+                ? colors.text.secondary
+                : "#6C7C91",
+            fontSize: 11,
+            lineHeight: 16,
           }}
         >
           {label}
@@ -539,7 +619,7 @@ export function Row({
   metadataPosition = "after",
   status,
   grouped = false,
-  leadingSize = 40,
+  leadingSize = 36,
   style,
 }: {
   title: string;
@@ -557,7 +637,7 @@ export function Row({
   leadingSize?: number;
   style?: ViewStyle;
 }) {
-  const { colors, dark } = useTheme();
+  const { colors } = useTheme();
   const leadingIcon =
     React.isValidElement<{ size?: number; color?: string }>(leading) &&
     typeof leading.props.size === "number"
@@ -575,23 +655,18 @@ export function Row({
   return (
     <View
       style={{
-        minHeight: 70,
-        paddingHorizontal: 14,
+        minHeight: 62,
+        paddingHorizontal: 11,
         paddingVertical: 0,
-        borderRadius: grouped ? 0 : 19,
-        marginBottom: grouped ? 0 : 8,
+        borderRadius: grouped ? 0 : 12,
+        marginBottom: grouped ? 0 : 6,
         flexDirection: "row",
         alignItems: "center",
         gap: 8,
         borderWidth: grouped ? 0 : 1,
         borderBottomWidth: grouped ? 1 : 1,
-        borderColor: colors.border + "A6",
+        borderColor: colors.border,
         backgroundColor: selected ? colors.brand.primarySoft : colors.surface,
-        boxShadow: grouped
-          ? undefined
-          : dark
-            ? "0px 3px 18px rgba(0,0,0,0.062745)"
-            : "0px 3px 16px rgba(49,88,148,0.023529)",
         ...style,
       }}
     >
@@ -607,12 +682,12 @@ export function Row({
         }
         accessibilityState={{ selected }}
         style={{
-          minHeight: 68,
-          paddingVertical: 12,
+          minHeight: 60,
+          paddingVertical: 10,
           flex: 1,
           flexDirection: "row",
           alignItems: "center",
-          gap: 12,
+          gap: 10,
           backgroundColor: selected ? colors.brand.primarySoft : colors.surface,
         }}
       >
@@ -621,7 +696,7 @@ export function Row({
             style={{
               width: leadingSize,
               height: leadingSize,
-              borderRadius: leadingSize / 2,
+              borderRadius: 10,
               backgroundColor: iconSurface,
               alignItems: "center",
               justifyContent: "center",
@@ -770,8 +845,15 @@ export function ErrorState({
         ? "requestTimeout"
         : error.reason === "cancelled"
           ? "requestCancelled"
-          : "connection";
-    hint = error.reason === "network" ? "connectionHint" : "requestRetryHint";
+          : error.reason === "tls"
+            ? "secureConnectionFailed"
+            : "connection";
+    hint =
+      error.reason === "tls"
+        ? "secureConnectionFailedHint"
+        : error.reason === "network"
+          ? "connectionHint"
+          : "requestRetryHint";
   } else if (error instanceof SyntaxError || error instanceof ZodError) {
     title = "invalidResponse";
     hint = "invalidResponseHint";
@@ -908,7 +990,7 @@ export function AvailabilityState({
 }) {
   return (
     <Screen scroll>
-      {configured && !apiDisabled && error !== undefined ? (
+      {configured && error !== undefined ? (
         <ErrorState error={error} retry={retry} />
       ) : (
         <Card>
@@ -922,7 +1004,13 @@ export function AvailabilityState({
             )}
           </Label>
           <Label tone="secondary">
-            {t(!configured ? "setupHint" : "connectionHint")}
+            {t(
+              !configured
+                ? "setupHint"
+                : apiDisabled
+                  ? "apiDisabledHint"
+                  : "connectionHint",
+            )}
           </Label>
           <Button variant="secondary" label={t("retry")} onPress={retry} />
         </Card>

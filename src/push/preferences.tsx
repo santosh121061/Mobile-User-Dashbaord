@@ -12,8 +12,20 @@ export function PushPreferences() {
   const enabled = push.preferences?.enabled ?? false;
   const available =
     push.supported &&
+    push.preferences?.provider.available === true &&
     push.preferences?.provider.status === "ready" &&
     !!session.bootstrap?.modules.notifications;
+  const reason = push.preferences?.provider.unavailable_reason;
+  const unavailable =
+    reason === "api_disabled"
+      ? "Push notifications are unavailable while the mobile API is disabled."
+      : reason === "in_app_disabled"
+        ? "In-app notifications are disabled."
+        : reason === "disabled"
+          ? "Push notifications are disabled."
+          : reason === "unconfigured"
+            ? "Push notifications are not configured."
+            : t("pushUnavailable");
   return (
     <Card>
       <Label tone="secondary">{t("pushPrivacyHint")}</Label>
@@ -35,7 +47,7 @@ export function PushPreferences() {
             ? push.error
             : available
               ? t("pushInactive")
-              : t("pushUnavailable")}
+              : unavailable}
       </Label>
       <Button
         label={t("retry")}

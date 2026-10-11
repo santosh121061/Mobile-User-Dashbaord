@@ -1,15 +1,22 @@
-import { Modal, ScrollView, View, useWindowDimensions } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
+import {
+  Archive,
+  History,
+  Mail,
+  Pencil,
+  ShieldCheck,
+  UserRound,
+} from "lucide-react-native";
 import { api, check, unwrap } from "@/api/client";
 import { useRead } from "@/api/hooks";
 import { envelope } from "@/api/runtime";
 import { targetSchema } from "@/api/contracts";
-import { Button, Card, ErrorState, Label, Loading } from "@/components/ui";
+import { Button, ErrorState, Loading, Row } from "@/components/ui";
 import { useTheme } from "@/theme";
+import { Sheet } from "@/components/sheet";
 import { t, type StringKey } from "@/localization";
 import { useFeatureWork } from "./use-feature-work";
-import { useFeatureConfirmation } from "./use-feature-confirmation";
+import { useFeatureAction } from "./use-feature-action";
 
 export function UserMenu({
   id,
@@ -23,10 +30,8 @@ export function UserMenu({
   refresh: () => Promise<unknown>;
 }) {
   const { colors } = useTheme();
-  const { width } = useWindowDimensions();
-  const insets = useSafeAreaInsets();
   const work = useFeatureWork();
-  const confirm = useFeatureConfirmation();
+  const runAction = useFeatureAction();
   const context = useRead(
     "user-menu",
     id,
@@ -46,9 +51,9 @@ export function UserMenu({
     sessions: "revokeSessions",
     reset: "reset",
   } satisfies Record<string, StringKey>;
-  const run = (action: keyof typeof labels) =>
+  const runUserAction = (action: keyof typeof labels) =>
     work.run(async (scope) => {
-      await confirm(
+      await runAction(
         scope,
         "POST",
         `/api/v1/users/${id}/actions/${action}`,
@@ -62,6 +67,9 @@ export function UserMenu({
             }),
           );
         },
+        action === "archive" ||
+          action === "sessions" ||
+          (action === "status" && context.data?.user.status !== "disabled"),
       );
       scope.assertCurrent();
       await refresh();
@@ -69,117 +77,90 @@ export function UserMenu({
       close();
     });
   return (
-    <Modal
-      transparent
-      animationType={width < 600 ? "slide" : "fade"}
-      onRequestClose={() => {
-        if (!work.busy) close();
-      }}
-    >
-      <View
-        style={{
-          flex: 1,
-          justifyContent: width < 600 ? "flex-end" : "center",
-          padding: width < 600 ? 0 : 24,
-          backgroundColor: colors.overlay,
-        }}
-      >
-        <ScrollView
-          style={{
-            maxHeight: "90%",
-            width: "100%",
-            maxWidth: 470,
-            alignSelf: "center",
-          }}
-          contentContainerStyle={{ flexGrow: 1 }}
-        >
-          <Card
-            style={{
-              borderRadius: 28,
-              borderBottomStartRadius: width < 600 ? 0 : 28,
-              borderBottomEndRadius: width < 600 ? 0 : 28,
-              paddingBottom: 16 + insets.bottom,
-            }}
-          >
-            <View
-              style={{
-                width: 34,
-                height: 4,
-                borderRadius: 2,
-                backgroundColor: colors.controlBorder,
-                alignSelf: "center",
-                marginBottom: 8,
-              }}
-            />
-            <Label size="appbar">{name}</Label>
-            {context.isPending ? (
-              <Loading />
-            ) : context.error ? (
-              <ErrorState
-                error={context.error}
-                retry={() => void context.refetch()}
-              />
-            ) : (
-              context.data && (
-                <>
-                  <Button
-                    variant="secondary"
-                    label={t("detail")}
-                    disabled={work.busy}
-                    onPress={() => {
+    <Sheet title={name} close={close} closeDisabled={work.busy}>
+      {context.isPending ? (
+        <Loading />
+      ) : context.error ? (
+        <ErrorState
+          error={context.error}
+          retry={() => void context.refetch()}
+        />
+      ) : (
+        context.data && (
+          <>
+            <Row
+              title={t("detail")}
+              subtitle={context.data.user.email}
+              leading={<UserRound size={19} color={colors.brand.primary} />}
+              onPress={
+                work.busy
+                  ? undefined
+                  : () => {
                       close();
                       router.push(`/users/${id}`);
-                    }}
-                  />
-                  {context.data.actions.update && (
-                    <Button
-                      label={t("editUser")}
-                      disabled={work.busy}
-                      onPress={() => {
+                    }
+              }
+            />
+            {context.data.actions.update && (
+              <Row
+                title={t("editUser")}
+                leading={<Pencil size={19} color={colors.brand.primary} />}
+                onPress={
+                  work.busy
+                    ? undefined
+                    : () => {
                         close();
                         router.push(`/users/${id}/edit`);
-                      }}
-                    />
-                  )}
-                  {context.data.actions.access && (
-                    <Button
-                      variant="secondary"
-                      label={t("access")}
-                      disabled={work.busy}
-                      onPress={() => {
+                      }
+                }
+              />
+            )}
+            {context.data.actions.access && (
+              <Row
+                title={t("access")}
+                leading={<ShieldCheck size={19} color={colors.brand.primary} />}
+                onPress={
+                  work.busy
+                    ? undefined
+                    : () => {
                         close();
                         router.push(`/users/${id}/access`);
-                      }}
-                    />
-                  )}
-                  {(Object.keys(labels) as (keyof typeof labels)[])
-                    .filter((action) => context.data!.actions[action])
-                    .map((action) => (
-                      <Button
-                        key={action}
-                        variant={
-                          ["status", "archive", "sessions"].includes(action)
-                            ? "danger"
-                            : "secondary"
-                        }
-                        label={t(labels[action])}
-                        disabled={work.busy}
-                        onPress={() => void run(action)}
-                      />
-                    ))}
-                </>
-              )
+                      }
+                }
+              />
             )}
-            {!!work.error && <ErrorState error={work.error} />}
-            <Button
-              variant="tertiary"
-              label={t("cancel")}
-              disabled={work.busy}
-              onPress={close}
-            />
-          </Card>
-        </ScrollView>
-      </View>
-    </Modal>
+            {(Object.keys(labels) as (keyof typeof labels)[])
+              .filter((action) => context.data!.actions[action])
+              .map((action) => (
+                <Row
+                  key={action}
+                  title={t(labels[action])}
+                  leading={
+                    action === "reset" ? (
+                      <Mail size={19} color={colors.brand.primary} />
+                    ) : action === "sessions" ? (
+                      <History size={19} color={colors.status.dangerText} />
+                    ) : action === "status" ? (
+                      <UserRound size={19} color={colors.status.dangerText} />
+                    ) : (
+                      <Archive size={19} color={colors.status.dangerText} />
+                    )
+                  }
+                  onPress={
+                    work.busy ? undefined : () => void runUserAction(action)
+                  }
+                />
+              ))}
+          </>
+        )
+      )}
+      {!!work.error && <ErrorState error={work.error} />}
+      <Button
+        variant="tertiary"
+        label={t("cancel")}
+        disabled={work.busy}
+        onPress={close}
+      />
+    </Sheet>
   );
 }

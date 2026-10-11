@@ -1,16 +1,17 @@
-import { useConfirmation } from "@/auth/confirmation";
+import { useAuthenticatedAction } from "@/auth/authenticated-actions";
 import type { PrivateWork } from "@/auth/private-work";
 
-/** Link the owning screen's work to the shared confirmation dialog and write. */
-export function useFeatureConfirmation() {
-  const confirm = useConfirmation();
+/** Keep writes tied to their owning screen; request consent only for destructive actions. */
+export function useFeatureAction() {
+  const runAction = useAuthenticatedAction();
   return <T>(
     scope: PrivateWork,
     method: "POST" | "PUT" | "PATCH" | "DELETE",
     path: string,
     action: (signal: AbortSignal) => Promise<T>,
+    requiresConfirmation?: boolean,
   ) =>
-    confirm(
+    runAction(
       method,
       path,
       (signal) => {
@@ -18,5 +19,6 @@ export function useFeatureConfirmation() {
         return action(signal);
       },
       scope.signal,
+      requiresConfirmation,
     );
 }

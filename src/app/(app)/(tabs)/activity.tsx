@@ -2,7 +2,12 @@ import { RootHeader } from "@/components/chrome";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { View } from "react-native";
-import { Search, RefreshCw } from "lucide-react-native";
+import {
+  Search,
+  RefreshCw,
+  SlidersHorizontal,
+  CalendarDays,
+} from "lucide-react-native";
 import { useTheme } from "@/theme";
 import { IconButton } from "@/components/visuals";
 import { ActivityRow } from "@/features/activity-row";
@@ -20,6 +25,8 @@ import {
   Screen,
 } from "@/components/ui";
 import { Records } from "@/components/records";
+import { Sheet } from "@/components/sheet";
+import { Choice } from "@/features/choice";
 import { t } from "@/localization";
 import { ExportButton } from "@/features/exports";
 import {
@@ -50,6 +57,9 @@ function ActivityList() {
   }>();
   const importedSearch = useRef("");
   const [state, setState] = useState<State>("");
+  const [category, setCategory] = useState<ActivityCriteria["category"]>();
+  const [period, setPeriod] = useState<ActivityCriteria["period"]>();
+  const [dialog, setDialog] = useState<"filters" | "dates" | null>(null);
   useEffect(() => {
     if (
       typeof params.search !== "string" ||
@@ -64,6 +74,8 @@ function ActivityList() {
   const criteria: ActivityCriteria = {
     search: debounced,
     ...(state ? { state } : {}),
+    ...(category ? { category } : {}),
+    ...(period ? { period } : {}),
   };
   return (
     <Access module="activity">
@@ -77,7 +89,13 @@ function ActivityList() {
           onChangeText={setSearch}
           maxLength={100}
         />
-        <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
+        <View
+          style={{
+            flexDirection: "row",
+            flexWrap: "wrap",
+            alignItems: "center",
+          }}
+        >
           {(["", "success", "denied", "failed"] as State[]).map((value) => (
             <Chip
               key={value}
@@ -86,7 +104,59 @@ function ActivityList() {
               onPress={() => setState(value)}
             />
           ))}
+          <IconButton
+            label={t("activityFilters")}
+            onPress={() => setDialog("filters")}
+          >
+            <SlidersHorizontal size={20} color={colors.text.secondary} />
+          </IconButton>
+          <IconButton
+            label={t("activityPeriod")}
+            onPress={() => setDialog("dates")}
+          >
+            <CalendarDays size={20} color={colors.text.secondary} />
+          </IconButton>
         </View>
+        {dialog === "filters" && (
+          <Sheet title={t("activityFilters")} close={() => setDialog(null)}>
+            <Label size="bodyMedium">{t("eventType")}</Label>
+            {(["", "users", "security", "reports"] as const).map((value) => (
+              <Choice
+                key={value}
+                label={t(value || "all")}
+                selected={(category ?? "") === value}
+                onPress={() => setCategory(value || undefined)}
+              />
+            ))}
+            <Button
+              label={t("activityPeriod")}
+              variant="secondary"
+              onPress={() => setDialog("dates")}
+            />
+            <Button label="Done" onPress={() => setDialog(null)} />
+          </Sheet>
+        )}
+        {dialog === "dates" && (
+          <Sheet title={t("activityPeriod")} close={() => setDialog(null)}>
+            {(
+              [
+                ["today", "today"],
+                ["7d", "lastSevenDays"],
+                ["all", "allDates"],
+              ] as const
+            ).map(([value, label]) => (
+              <Choice
+                key={value}
+                label={t(label)}
+                selected={(period ?? "all") === value}
+                onPress={() => {
+                  setPeriod(value);
+                  setDialog(null);
+                }}
+              />
+            ))}
+          </Sheet>
+        )}
         <ActivityFeed key={JSON.stringify(criteria)} criteria={criteria} />
       </Screen>
     </Access>

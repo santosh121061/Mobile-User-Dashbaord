@@ -10,7 +10,7 @@ tags: [critical, isolated]
 - tapOn: Search
 - inputText: Mobile Account
 - hideKeyboard
-- tapOn: Enabled
+- tapOn: Active.*
 - extendedWaitUntil:
     visible: Mobile Account.*
     timeout: 15000

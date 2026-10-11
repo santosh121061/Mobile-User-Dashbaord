@@ -5,9 +5,16 @@ import { z } from "zod";
 import { api, ApiError, check, unwrap } from "@/api/client";
 import { useRead } from "@/api/hooks";
 import { envelope } from "@/api/runtime";
-import { accessSchema } from "@/api/contracts";
-import { useBootstrap } from "@/auth/session";
-import { useFeatureConfirmation } from "@/features/use-feature-confirmation";
+import { accessSchema, directAccessWriteSchema } from "@/api/contracts";
+import { useBootstrap, useSession } from "@/auth/session";
+import {
+  activeEntries,
+  availabilityMatches,
+  capabilityAvailable,
+  catalogEntries,
+  staleAvailability,
+} from "@/api/availability";
+import { useFeatureAction } from "@/features/use-feature-action";
 import { useDiscard, useTitle } from "@/components/forms";
 import {
   Button,
@@ -43,9 +50,11 @@ export default function UserAccess() {
         }),
         envelope(accessSchema),
       ).data,
-    !!snapshot.modules.users && !!snapshot.actions["access.manage"],
+    !!snapshot.features["api.enabled"] &&
+      !!snapshot.modules.users &&
+      !!snapshot.actions["access.manage"],
   );
-  if (!snapshot.actions["access.manage"])
+  if (!snapshot.features["api.enabled"] || !snapshot.actions["access.manage"])
     return (
       <Screen>
         <ErrorState error={new ApiError(403, {}, null)} />
@@ -64,7 +73,14 @@ export default function UserAccess() {
       ) : (
         query.data && (
           <AccessEditor
-            key={snapshot.account.id + ":" + id}
+            key={[
+              snapshot.account.id,
+              snapshot.access_revision,
+              snapshot.configuration_revision,
+              snapshot.availability_revision,
+              query.data.availability_revision,
+              id,
+            ].join(":")}
             id={id}
             data={query.data}
             refresh={() => query.refetch()}
@@ -81,7 +97,15 @@ function accessDefaults(
   const effectMap: Record<string, Effect> = {};
   const scopeMap: Record<string, string> = {};
   const fieldMap: Fields = {};
-  for (const key of Object.keys(data.catalog)) {
+  const sourceRules = delegation ? data.delegation?.rules : undefined;
+  const sourceFields = delegation ? data.delegation?.fields : data.fields;
+  const permissionKeys = new Set([
+    ...Object.keys(data.catalog),
+    ...(delegation
+      ? (sourceRules?.map((rule) => rule.name) ?? [])
+      : [...Object.keys(data.effects), ...Object.keys(data.scopes)]),
+  ]);
+  for (const key of permissionKeys) {
     effectMap[key] = delegation
       ? data.delegation?.rules.some((rule) => rule.name === key)
         ? "allow"
@@ -89,13 +113,23 @@ function accessDefaults(
       : (data.effects[key] ?? "inherit");
     scopeMap[key] = delegation
       ? (data.delegation?.rules.find((rule) => rule.name === key)?.scope ??
+        data.delegatable[key]?.[0] ??
         "self")
       : (data.scopes[key] ?? "inherit");
   }
-  for (const key of Object.keys(data.field_catalog)) {
-    const source = (delegation ? data.delegation?.fields : data.fields)?.find(
-      (rule) => rule.field === key,
-    );
+  const fieldKeys = new Set([
+    ...Object.keys(data.field_catalog),
+    ...(sourceFields
+      ?.filter(
+        (rule) =>
+          !delegation ||
+          (typeof rule.can_view === "boolean" &&
+            typeof rule.can_edit === "boolean"),
+      )
+      .map((rule) => rule.field) ?? []),
+  ]);
+  for (const key of fieldKeys) {
+    const source = sourceFields?.find((rule) => rule.field === key);
     const mode = (value: boolean | null | undefined): Effect =>
       value == null
         ? delegation
@@ -125,8 +159,17 @@ function AccessEditor({
   data: z.infer<typeof accessSchema>;
   refresh: () => Promise<unknown>;
 }) {
-  const confirm = useFeatureConfirmation();
-  const work = useFeatureWork();
+  const runAction = useFeatureAction();
+  const session = useSession();
+  const snapshot = useBootstrap();
+  const work = useFeatureWork(data.availability_revision);
+  const [stale, setStale] = useState(false);
+  const canEdit =
+    !!snapshot.features["api.enabled"] &&
+    !!snapshot.actions["access.manage"] &&
+    availabilityMatches(snapshot, data) &&
+    !stale;
+  const catalog = activeEntries(data, data.catalog);
   const initial = accessDefaults(data, false);
   const [effects, setEffects] = useState(initial.effects);
   const [scopes, setScopes] = useState(initial.scopes);
@@ -146,6 +189,9 @@ function AccessEditor({
       setScopes(next.scopes);
       setFields(next.fields);
       setAssigned(next.assigned);
+    } else if (assigned === source.assigned_ids.join(", ")) {
+      // Preserve a fresh complete assignment list when only permission rules were edited.
+      setAssigned(data.assigned_ids.join(", "));
     }
   }
   const selectMode = (next: boolean) => {
@@ -158,67 +204,84 @@ function AccessEditor({
     setDelegation(next);
   };
   const save = () =>
-    work.run(async (scope) => {
-      if (delegation) {
-        const body = {
-          grants: Object.keys(data.catalog).filter(
-            (key) => effects[key] === "allow",
-          ),
-          scopes,
-          fields: Object.fromEntries(
-            Object.entries(fields).map(([key, rule]) => [
-              key,
-              {
-                view: rule.view === "allow",
-                edit: rule.edit === "allow",
-              },
-            ]),
-          ),
-        };
-        await confirm(
-          scope,
-          "PUT",
-          `/api/v1/users/${id}/delegation`,
-          async (signal) =>
-            check(
-              await api.PUT("/v1/users/{user}/delegation", {
-                params: { path: { user: Number(id) } },
-                body,
-
-                signal,
-              }),
+    work.run(
+      async (scope) => {
+        if (!canEdit) throw new ApiError(403, {}, null);
+        const activeEffects = catalogEntries(catalog, effects);
+        const activeScopes = catalogEntries(catalog, scopes);
+        const visibleFields = catalogEntries(data.field_catalog, fields);
+        if (delegation) {
+          const body = {
+            grants: Object.keys(activeEffects).filter(
+              (key) => effects[key] === "allow",
             ),
-        );
-      } else {
-        const ids = assigned.trim()
-          ? assigned.split(",").map((value) => Number(value.trim()))
-          : [];
-        if (
-          ids.some((value) => !Number.isSafeInteger(value) || value < 1) ||
-          new Set(ids).size !== ids.length
-        )
-          throw new Error("Invalid assignments");
-        const body = { effects, scopes, fields, assigned_ids: ids };
-        await confirm(
-          scope,
-          "PUT",
-          `/api/v1/users/${id}/access`,
-          async (signal) =>
-            check(
-              await api.PUT("/v1/users/{user}/access", {
-                params: { path: { user: Number(id) } },
-                body,
-
-                signal,
-              }),
+            scopes: activeScopes,
+            availability_revision: data.availability_revision,
+            fields: Object.fromEntries(
+              Object.entries(visibleFields).map(([key, rule]) => [
+                key,
+                {
+                  view: rule.view === "allow",
+                  edit: rule.edit === "allow",
+                },
+              ]),
             ),
-        );
-      }
-      scope.assertCurrent();
-      setDirty(false);
-      setEditedRevision(data.revision);
-      await refresh();
-    });
+          };
+          await runAction(
+            scope,
+            "PUT",
+            `/api/v1/users/${id}/delegation`,
+            async (signal) =>
+              check(
+                await api.PUT("/v1/users/{user}/delegation", {
+                  params: { path: { user: Number(id) } },
+                  body,
+
+                  signal,
+                }),
+              ),
+          );
+        } else {
+          const ids = assigned.trim()
+            ? assigned.split(",").map((value) => Number(value.trim()))
+            : [];
+          if (
+            ids.some((value) => !Number.isSafeInteger(value) || value < 1) ||
+            new Set(ids).size !== ids.length
+          )
+            throw new Error("Invalid assignments");
+          const body = directAccessWriteSchema.parse({
+            effects: activeEffects,
+            scopes: activeScopes,
+            fields: visibleFields,
+            assigned_ids: ids,
+            availability_revision: data.availability_revision,
+            update_mode: "patch",
+          });
+          await runAction(
+            scope,
+            "PUT",
+            `/api/v1/users/${id}/access`,
+            async (signal) =>
+              check(
+                await api.PUT("/v1/users/{user}/access", {
+                  params: { path: { user: Number(id) } },
+                  body,
+
+                  signal,
+                }),
+              ),
+          );
+        }
+        scope.assertCurrent();
+        setDirty(false);
+        setEditedRevision(data.revision);
+        await refresh();
+      },
+      (failure) => {
+        if (staleAvailability(failure)) setStale(true);
+      },
+    );
   return (
     <Screen
       scroll
@@ -226,7 +289,7 @@ function AccessEditor({
         <Button
           label={t("save")}
           loading={busy}
-          disabled={!dirty}
+          disabled={!dirty || !canEdit}
           onPress={() => void save()}
         />
       }
@@ -238,6 +301,24 @@ function AccessEditor({
           subtitle={t("delegationHint")}
           tone="purple"
         />
+        {!canEdit && (
+          <Card>
+            <Label accessibilityLiveRegion="polite">
+              Access options changed or are unavailable. Refresh before saving.
+            </Label>
+            <Button
+              label="Refresh access options"
+              variant="secondary"
+              onPress={() =>
+                void (async () => {
+                  await session.refresh();
+                  await refresh();
+                  setStale(false);
+                })()
+              }
+            />
+          </Card>
+        )}
         {dirty && editedRevision !== data.revision && (
           <Label accessibilityLiveRegion="polite">{t("editChanged")}</Label>
         )}
@@ -261,11 +342,11 @@ function AccessEditor({
             />
           </View>
         )}
-        <Label size="title">{t("permissions")}</Label>
+        <Label size="section">{t("permissions")}</Label>
         <Label size="caption" tone="secondary">
           {t("delegationHint")}
         </Label>
-        {Object.entries(data.catalog).map(([key, label]) => (
+        {Object.entries(catalog).map(([key, label]) => (
           <Card key={key}>
             <Label size="bodyMedium">{label}</Label>
             <View
@@ -284,6 +365,7 @@ function AccessEditor({
                   selected={effects[key] === value}
                   disabled={
                     busy ||
+                    !canEdit ||
                     (value === "allow" && !data.delegatable[key]?.length)
                   }
                   hint={
@@ -294,6 +376,7 @@ function AccessEditor({
                   onPress={() => {
                     if (
                       busy ||
+                      !canEdit ||
                       (value === "allow" && !data.delegatable[key]?.length)
                     )
                       return;
@@ -312,45 +395,40 @@ function AccessEditor({
                 flexWrap: "wrap",
               }}
             >
-              {(delegation
-                ? ["self", "all"]
-                : ["inherit", ...(data.delegatable[key] ?? [])]
-              )
-                .filter(
-                  (scope) =>
-                    !delegation ||
-                    scope === "self" ||
-                    data.delegatable[key]?.includes(scope),
-                )
-                .map((scope) => (
-                  <Chip
-                    key={scope}
-                    label={t(
-                      scope === "all"
-                        ? "allScope"
-                        : scope === "created"
-                          ? "createdScope"
-                          : (scope as "inherit" | "self" | "assigned"),
-                    )}
-                    selected={scopes[key] === scope}
-                    disabled={busy}
-                    onPress={() => {
-                      if (busy) return;
-                      setScopes((old) => ({
-                        ...old,
-                        [key]: scope,
-                      }));
-                      setDirty(true);
-                    }}
-                  />
-                ))}
+              {[
+                ...new Set([
+                  ...(!delegation ? ["inherit"] : []),
+                  ...(data.delegatable[key] ?? []),
+                ]),
+              ].map((scope) => (
+                <Chip
+                  key={scope}
+                  label={t(
+                    scope === "all"
+                      ? "allScope"
+                      : scope === "created"
+                        ? "createdScope"
+                        : (scope as "inherit" | "self" | "assigned"),
+                  )}
+                  selected={scopes[key] === scope}
+                  disabled={busy || !canEdit}
+                  onPress={() => {
+                    if (busy || !canEdit) return;
+                    setScopes((old) => ({
+                      ...old,
+                      [key]: scope,
+                    }));
+                    setDirty(true);
+                  }}
+                />
+              ))}
             </View>
             <Label size="caption" tone="secondary">
               {data.delegatable[key]?.join(", ") || t("noDelegation")}
             </Label>
           </Card>
         ))}
-        <Label size="title">{t("fields")}</Label>
+        <Label size="section">{t("fields")}</Label>
         {Object.entries(data.field_catalog).map(([key, label]) => (
           <Card key={key}>
             <Label>{label}</Label>
@@ -374,6 +452,7 @@ function AccessEditor({
                       selected={fields[key]?.[mode] === value}
                       disabled={
                         busy ||
+                        !canEdit ||
                         (value === "allow" &&
                           !data.field_delegatable[key]?.[mode])
                       }
@@ -386,6 +465,7 @@ function AccessEditor({
                       onPress={() => {
                         if (
                           busy ||
+                          !canEdit ||
                           (value === "allow" &&
                             !data.field_delegatable[key]?.[mode])
                         )
@@ -412,7 +492,7 @@ function AccessEditor({
             label={t("assignedIds")}
             help={t("assignedIdsHint")}
             value={assigned}
-            editable={!busy}
+            editable={!busy && canEdit}
             onChangeText={(value) => {
               setAssigned(value);
               setDirty(true);
@@ -420,7 +500,11 @@ function AccessEditor({
             keyboardType="numbers-and-punctuation"
           />
         )}
-        <EffectiveAccess value={data.effective} />
+        <EffectiveAccess
+          value={data.effective.filter((rule) =>
+            capabilityAvailable(data, rule.key),
+          )}
+        />
         {!!error && <ErrorState error={error} />}
         <Button
           label={t("cancel")}

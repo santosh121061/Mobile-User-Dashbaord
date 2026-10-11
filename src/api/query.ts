@@ -28,6 +28,7 @@ export function queryKey(
         bootstrap.configuration_revision,
         module,
         criteria,
+        bootstrap.availability_revision,
     ] as const;
 }
 export function scopedKey(

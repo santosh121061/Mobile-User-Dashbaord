@@ -2,7 +2,11 @@ import { useEffect, useRef, useState } from "react";
 import { Redirect, router, type Href } from "expo-router";
 import { useSession } from "@/auth/session";
 import { currentIntent, discardIntent, useIntent } from "@/auth/intents";
-import { permitsIntent, type MobileIntent } from "@/utils/links";
+import {
+  permitsIntent,
+  unavailableHref,
+  type MobileIntent,
+} from "@/utils/links";
 import { Loading } from "@/components/ui";
 
 export default function IntentGate() {
@@ -43,7 +47,7 @@ export default function IntentGate() {
       scope.assertCurrent();
       const route = permitsIntent(intent.route, bootstrap)
         ? intent.route
-        : "/unavailable";
+        : unavailableHref(intent.route, bootstrap.account.id);
       router.replace(route as Href);
       discardIntent(intent);
     } catch {

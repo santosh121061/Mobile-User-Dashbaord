@@ -7,6 +7,7 @@ import { useSession } from "../src/auth/session";
 import { useTheme } from "../src/theme";
 import tokens from "../src/theme/tokens.json";
 import { Input } from "../src/components/ui";
+import { SelectionField } from "../src/components/selection-field";
 import { apiUrl } from "../src/config/environment";
 
 jest.mock("../src/auth/session", () => ({ useSession: jest.fn() }));
@@ -122,8 +123,23 @@ it("shows focus on the whole rounded field and preserves caller focus/blur callb
   const input = screen.getByLabelText("Email");
   fireEvent(input, "focus", {});
   expect(onFocus).toHaveBeenCalledTimes(1);
-  expect(input.props.style[0].minHeight).toBe(52);
+  expect(input.props.style[0].minHeight).toBe(48);
   fireEvent(input, "blur", {});
   expect(onBlur).toHaveBeenCalledTimes(1);
-  expect(input.props.style[0].minHeight).toBe(52);
+  expect(input.props.style[0].minHeight).toBe(48);
+});
+it("lets a selection sheet close without changing the selected value", () => {
+  const screen = render(
+    <SelectionField label="Role" value="Viewer">
+      <Input label="Permission search" />
+    </SelectionField>,
+  );
+  fireEvent.press(screen.getByRole("button", { name: "Role" }));
+  expect(screen.getByRole("header", { name: "Role" })).toBeTruthy();
+  expect(screen.getByLabelText("Permission search")).toBeTruthy();
+  fireEvent.press(screen.getByRole("button", { name: "Close dialog" }));
+  expect(screen.queryByLabelText("Permission search")).toBeNull();
+  expect(
+    screen.getByRole("button", { name: "Role" }).props.accessibilityValue,
+  ).toEqual({ text: "Viewer" });
 });

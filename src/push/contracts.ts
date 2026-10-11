@@ -4,6 +4,11 @@ export const pushProviderSchema = z.object({
   provider: z.literal("expo"),
   status: z.enum(["disabled", "unconfigured", "ready"]),
   project_id: z.string().uuid().nullable(),
+  available: z.boolean().optional(),
+  unavailable_reason: z
+    .enum(["api_disabled", "in_app_disabled", "disabled", "unconfigured"])
+    .nullable()
+    .optional(),
 });
 export const pushPreferencesSchema = z.object({
   enabled: z.boolean(),

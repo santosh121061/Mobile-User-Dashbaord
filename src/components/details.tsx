@@ -110,23 +110,23 @@ export function ToggleRow({
   icon?: LucideIcon;
   accessibilityLabel?: string;
 }) {
-  const { colors, dark } = useTheme();
+  const { colors } = useTheme();
   return (
     <View
       style={{
         flexDirection: "row",
         alignItems: "center",
         gap: 12,
-        minHeight: 69,
-        paddingVertical: 13,
+        minHeight: 60,
+        paddingVertical: 10,
       }}
     >
       {Icon && (
         <View
           style={{
-            width: 38,
-            height: 38,
-            borderRadius: 13,
+            width: 36,
+            height: 36,
+            borderRadius: 10,
             alignItems: "center",
             justifyContent: "center",
             backgroundColor: colors.brand.primarySoft,
@@ -163,22 +163,18 @@ export function ToggleRow({
       >
         <View
           style={{
-            width: 42,
-            height: 26,
-            borderRadius: 13,
+            width: 40,
+            height: 24,
+            borderRadius: 12,
             padding: 3,
-            backgroundColor: value
-              ? dark
-                ? "#2BBE8F"
-                : "#10BC83"
-              : colors.controlBorder,
+            backgroundColor: value ? "#16B77B" : colors.controlBorder,
           }}
         >
           <View
             style={{
-              width: 20,
-              height: 20,
-              borderRadius: 10,
+              width: 18,
+              height: 18,
+              borderRadius: 9,
               alignSelf: value ? "flex-end" : "flex-start",
               backgroundColor: "#FFFFFF",
             }}

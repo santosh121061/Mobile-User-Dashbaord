@@ -1,7 +1,7 @@
 import type { z } from "zod";
 import { api, check } from "@/api/client";
 import { targetSchema } from "@/api/contracts";
-import { useFeatureConfirmation } from "@/features/use-feature-confirmation";
+import { useFeatureAction } from "@/features/use-feature-action";
 import { Button, Card, ErrorState, Label } from "@/components/ui";
 import { t } from "@/localization";
 import { useFeatureWork } from "./use-feature-work";
@@ -14,7 +14,7 @@ export function OwnerGovernance({
   data: z.infer<typeof targetSchema>;
   refresh: () => Promise<unknown>;
 }) {
-  const confirm = useFeatureConfirmation();
+  const runAction = useFeatureAction();
   const work = useFeatureWork();
   if (!data.actions.owner || !data.governance) return null;
   const governance = data.governance;
@@ -40,7 +40,7 @@ export function OwnerGovernance({
           loading={work.busy}
           onPress={() =>
             void work.run(async (scope) => {
-              await confirm(
+              await runAction(
                 scope,
                 "POST",
                 `/api/v1/users/${id}/owner-lock`,
@@ -56,6 +56,7 @@ export function OwnerGovernance({
                       signal,
                     }),
                   ),
+                !governance.locked,
               );
               scope.assertCurrent();
               await refresh();

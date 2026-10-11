@@ -4,6 +4,7 @@ import { Label } from "@/components/ui";
 import { useTheme } from "@/theme";
 import type { UserRecord } from "@/api/runtime";
 import { t } from "@/localization";
+import { userStatusLabel, userStatusTone } from "./user-status";
 export function UserDirectoryRow({
   user,
   selectable,
@@ -27,8 +28,19 @@ export function UserDirectoryRow({
 }) {
   const { colors, dark } = useTheme();
   const { width, fontScale } = useWindowDimensions();
-  const narrow = width < 360 || fontScale >= 1.5;
+  const narrow = fontScale >= 1.5;
+  const small = width <= 330;
   const name = user.name ?? user.public_id;
+  const statusLabel = userStatusLabel(user);
+  const statusTone = userStatusTone(user);
+  const statusColor =
+    statusTone === "neutral"
+      ? colors.text.secondary
+      : colors.status[`${statusTone}Text`];
+  const statusBackground =
+    statusTone === "neutral"
+      ? colors.surfaceMuted
+      : colors.status[`${statusTone}Soft`];
   const roles = user.roles ?? [];
   const initials = name
     .split(/\s+/)
@@ -42,17 +54,17 @@ export function UserDirectoryRow({
         alignItems: narrow ? "flex-start" : "flex-end",
         flexDirection: narrow ? "row" : "column",
         flexWrap: "wrap",
-        gap: 4,
-        maxWidth: narrow ? undefined : 92,
+        gap: 2,
+        maxWidth: narrow ? undefined : 74,
       }}
     >
       {roles.map((role) => (
         <View
           key={role.id}
           style={{
-            paddingVertical: 3,
-            paddingHorizontal: 7,
-            borderRadius: 9,
+            paddingVertical: 2,
+            paddingHorizontal: 6,
+            borderRadius: 6,
             backgroundColor:
               role.name === "Manager"
                 ? colors.accent.purpleSoft
@@ -62,6 +74,8 @@ export function UserDirectoryRow({
           <Label
             size="caption"
             style={{
+              fontSize: small ? 8 : 9,
+              lineHeight: 13,
               color:
                 role.name === "Manager"
                   ? colors.accent.purple
@@ -72,20 +86,16 @@ export function UserDirectoryRow({
           </Label>
         </View>
       ))}
-      {(user.archived || user.status) && (
+      {statusLabel && (
         <View
           style={{
             flexDirection: "row",
             alignItems: "center",
-            gap: 4,
-            paddingVertical: 3,
-            paddingHorizontal: 7,
-            borderRadius: 9,
-            backgroundColor: user.archived
-              ? colors.surfaceMuted
-              : user.status === "enabled"
-                ? colors.status.successSoft
-                : colors.status.dangerSoft,
+            gap: 2,
+            paddingVertical: 2,
+            paddingHorizontal: 6,
+            borderRadius: 6,
+            backgroundColor: statusBackground,
           }}
         >
           <View
@@ -93,24 +103,18 @@ export function UserDirectoryRow({
               width: 6,
               height: 6,
               borderRadius: 3,
-              backgroundColor: user.archived
-                ? colors.text.secondary
-                : user.status === "enabled"
-                  ? colors.status.successText
-                  : colors.status.dangerText,
+              backgroundColor: statusColor,
             }}
           />
           <Label
             size="caption"
             style={{
-              color: user.archived
-                ? colors.text.secondary
-                : user.status === "enabled"
-                  ? colors.status.successText
-                  : colors.status.dangerText,
+              color: statusColor,
+              fontSize: small ? 8 : 9,
+              lineHeight: 13,
             }}
           >
-            {t(user.archived ? "archived" : user.status!)}
+            {statusLabel}
           </Label>
         </View>
       )}
@@ -122,18 +126,20 @@ export function UserDirectoryRow({
         flexDirection: "row",
         alignItems: "center",
         gap: 3,
-        minHeight: 77,
-        paddingVertical: 10,
-        paddingRight: 10,
+        minHeight: small ? 58 : 61,
+        paddingVertical: 7,
+        paddingRight: 8,
         paddingLeft: selectable ? 4 : 14,
-        marginBottom: 8,
+        marginBottom: 6,
         borderWidth: 1,
-        borderColor: selected ? "#D0E4FF" : colors.border + "9E",
-        boxShadow: dark
-          ? "0px 3px 18px rgba(0,0,0,0.062745)"
-          : "0px 3px 16px rgba(49,88,148,0.023529)",
-        borderRadius: 18,
-        backgroundColor: selected ? colors.brand.primarySoft : colors.surface,
+        borderColor: selected ? "#AFCBFA" : dark ? colors.border : "#DCE5F0",
+        boxShadow: selected ? "inset 3px 0px #155EEF" : undefined,
+        borderRadius: 12,
+        backgroundColor: selected
+          ? dark
+            ? colors.brand.primarySoft
+            : "#F1F6FF"
+          : colors.surface,
       }}
     >
       {selectable && (
@@ -153,17 +159,17 @@ export function UserDirectoryRow({
           {selected ? (
             <SquareCheck size={20} color={colors.brand.primary} />
           ) : (
-            <Square size={20} strokeWidth={1.7} color={colors.selectionOutline} />
+            <Square
+              size={20}
+              strokeWidth={1.7}
+              color={colors.selectionOutline}
+            />
           )}
         </Pressable>
       )}
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={[
-          name,
-          user.email,
-          user.archived ? t("archived") : user.status && t(user.status),
-        ]
+        accessibilityLabel={[name, user.email, statusLabel]
           .filter(Boolean)
           .join(", ")}
         accessibilityState={{ selected, disabled: selecting && busy }}
@@ -179,33 +185,54 @@ export function UserDirectoryRow({
         style={{
           flex: 1,
           minWidth: 0,
-          minHeight: 54,
+          minHeight: 48,
           flexDirection: "row",
           alignItems: "center",
-          gap: 9,
+          gap: 8,
         }}
       >
         <View
           style={{
-            width: 38,
-            height: 38,
-            borderRadius: 19,
+            width: 30,
+            height: 30,
+            borderRadius: 15,
             alignItems: "center",
             justifyContent: "center",
             backgroundColor: colors.brand.primarySoft,
           }}
         >
-          <Label size="captionMedium" style={{ color: colors.brand.primary }}>
+          <Label
+            size="captionMedium"
+            style={{
+              color: colors.brand.primary,
+              fontSize: 11,
+              lineHeight: 16,
+            }}
+          >
             {initials}
           </Label>
         </View>
         <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
-          <Label size="bodyMedium">{name}</Label>
+          <Label
+            size="bodyMedium"
+            style={{
+              fontFamily: "Inter_650DemiBold",
+              fontSize: small ? 11 : 13,
+              lineHeight: 17,
+            }}
+          >
+            {name}
+          </Label>
           {user.email !== undefined && (
             <Label
               size="caption"
               tone="secondary"
               numberOfLines={narrow ? undefined : 1}
+              style={{
+                fontSize: small ? 9 : 10,
+                lineHeight: 14,
+                color: dark ? colors.text.secondary : "#718198",
+              }}
             >
               {user.email}
             </Label>

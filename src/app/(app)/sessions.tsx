@@ -1,6 +1,7 @@
 import { useTitle } from "@/components/forms";
 import { ShieldCheck, Smartphone, Laptop } from "lucide-react-native";
 import { FormIntro } from "@/components/form-intro";
+import { KeyRow } from "@/components/details";
 import { View } from "react-native";
 import { useState } from "react";
 import { z } from "zod";
@@ -11,6 +12,8 @@ import { useSession } from "@/auth/session";
 import { Button, Chip, ErrorState, Label, Row, Screen } from "@/components/ui";
 import { Sheet } from "@/components/sheet";
 import { useTheme } from "@/theme";
+import { useFeatureAction } from "@/features/use-feature-action";
+import { useFeatureWork } from "@/features/use-feature-work";
 import { Records } from "@/components/records";
 import { date, t } from "@/localization";
 const nativeSchema = z.object({
@@ -32,8 +35,9 @@ export default function Sessions() {
   const [browser, setBrowser] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
   const { colors } = useTheme();
-  const [error, setError] = useState<unknown>(null);
-  const [busy, setBusy] = useState<string | null>(null);
+  const runAction = useFeatureAction();
+  const work = useFeatureWork();
+  const { error, busy } = work;
   const mobile = usePages(
     "mobile-sessions",
     null,
@@ -57,28 +61,43 @@ export default function Sessions() {
       ).data,
     browser,
   );
-  const revoke = async (id: string, current = false) => {
-    setBusy(id);
-    setError(null);
-    try {
-      check(
+  const revoke = (id: string, current = false) =>
+    work.run(async (scope) => {
+      await runAction(
+        scope,
+        "DELETE",
         browser
-          ? await api.DELETE("/v1/profile/sessions/{id}", {
-              params: { path: { id } },
-            })
-          : await api.DELETE("/v1/profile/mobile-sessions/{id}", {
-              params: { path: { id } },
-            }),
+          ? `/api/v1/profile/sessions/${id}`
+          : `/api/v1/profile/mobile-sessions/${id}`,
+        async (signal) =>
+          check(
+            browser
+              ? await api.DELETE("/v1/profile/sessions/{id}", {
+                  params: { path: { id } },
+                  signal,
+                })
+              : await api.DELETE("/v1/profile/mobile-sessions/{id}", {
+                  params: { path: { id } },
+                  signal,
+                }),
+          ),
+        true,
       );
+      scope.assertCurrent();
       if (current) await session.logout();
-      else if (browser) await web.refetch();
-      else await mobile.refetch();
-    } catch (failure) {
-      setError(failure);
-    } finally {
-      setBusy(null);
-    }
-  };
+      else {
+        if (browser) await web.refetch();
+        else await mobile.refetch();
+        scope.assertCurrent();
+        setSelected(null);
+      }
+    });
+  const selectedMobile = !browser
+    ? mobile.rows.find((row) => row.id === selected)
+    : undefined;
+  const selectedWeb = browser
+    ? web.data?.find((row) => row.id === selected)
+    : undefined;
   return (
     <Screen>
       <FormIntro
@@ -87,7 +106,7 @@ export default function Sessions() {
         subtitle={t("devicesIntroHint")}
         tone="mint"
       />
-      <Label size="title">{browser ? t("webSessions") : "This device"}</Label>
+      <Label size="section">{browser ? t("webSessions") : "This device"}</Label>
       {!!error && <ErrorState error={error} />}{" "}
       {browser ? (
         <Records
@@ -120,7 +139,7 @@ export default function Sessions() {
               {!row.current &&
                 mobile.rows.find((item) => !item.current)?.id === row.id && (
                   <Label
-                    size="title"
+                    size="section"
                     style={{ marginTop: 14, marginBottom: 12 }}
                   >
                     Other sessions
@@ -182,6 +201,7 @@ export default function Sessions() {
       </View>
       {!!selected && (
         <Sheet
+          closeDisabled={busy}
           title={
             browser
               ? t("webSessions")
@@ -192,11 +212,46 @@ export default function Sessions() {
             if (!busy) setSelected(null);
           }}
         >
+          {selectedMobile && (
+            <>
+              <KeyRow
+                label="Type"
+                value={selectedMobile.current ? "This device" : "Other device"}
+              />
+              <KeyRow label="Created" value={date(selectedMobile.created_at)} />
+              {selectedMobile.last_used_at && (
+                <KeyRow
+                  label="Last active"
+                  value={date(selectedMobile.last_used_at)}
+                />
+              )}
+              {selectedMobile.expires_at && (
+                <KeyRow
+                  label={t("expires")}
+                  value={date(selectedMobile.expires_at)}
+                />
+              )}
+            </>
+          )}
+          {selectedWeb && (
+            <>
+              <KeyRow label="Type" value={t("webSessions")} />
+              {selectedWeb.ip_address && (
+                <KeyRow label="IP address" value={selectedWeb.ip_address} />
+              )}
+              <KeyRow
+                label="Last active"
+                value={date(
+                  new Date(selectedWeb.last_activity * 1000).toISOString(),
+                )}
+              />
+            </>
+          )}
           <Button
             variant="danger"
             label={t("revoke")}
             disabled={!!busy}
-            loading={busy === selected}
+            loading={busy}
             onPress={() =>
               void revoke(
                 selected,

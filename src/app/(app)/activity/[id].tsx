@@ -2,15 +2,23 @@ import { useTitle } from "@/components/forms";
 import { CircleCheck, CircleX, History } from "lucide-react-native";
 import { View } from "react-native";
 import { KeyRow } from "@/components/details";
+import { AuditChanges } from "@/components/audit-changes";
 import { activityTitle } from "@/features/activity-row";
 import { useTheme } from "@/theme";
-import { useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useRead } from "@/api/hooks";
 import { api, unwrap } from "@/api/client";
 import { envelope, auditSchema } from "@/api/runtime";
 import { useBootstrap } from "@/auth/session";
 import { Access } from "@/components/access";
-import { Card, ErrorState, Label, Loading, Screen } from "@/components/ui";
+import {
+  Button,
+  Card,
+  ErrorState,
+  Label,
+  Loading,
+  Screen,
+} from "@/components/ui";
 import { date, t } from "@/localization";
 export default function AuditDetail() {
   useTitle("Activity details");
@@ -70,7 +78,7 @@ export default function AuditDetail() {
                   />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Label size="title" style={{ letterSpacing: -0.4 }}>
+                  <Label size="section" style={{ letterSpacing: -0.4 }}>
                     {activityTitle(query.data.action)}
                   </Label>
                   <Label
@@ -80,6 +88,11 @@ export default function AuditDetail() {
                   >
                     {query.data.actor.name ?? t("system")}
                   </Label>
+                  {query.data.description !== undefined && (
+                    <Label size="secondary" tone="secondary">
+                      {query.data.description}
+                    </Label>
+                  )}
                   <View
                     style={{
                       alignSelf: "flex-start",
@@ -131,7 +144,7 @@ export default function AuditDetail() {
               </Card>
               <View style={{ gap: 10 }}>
                 <View style={{ minHeight: 27, justifyContent: "center" }}>
-                  <Label size="title">Event details</Label>
+                  <Label size="section">Event details</Label>
                 </View>
                 <Card
                   style={{ gap: 0, paddingHorizontal: 16, paddingVertical: 2 }}
@@ -141,6 +154,10 @@ export default function AuditDetail() {
                     value={query.data.actor.name ?? t("system")}
                   />
                   <KeyRow label="Outcome" value={query.data.outcome} />
+                  <KeyRow label="Event ID" value={query.data.public_id} />
+                  {query.data.category && (
+                    <KeyRow label="Category" value={query.data.category} />
+                  )}
                   <KeyRow
                     label="Date and time"
                     last
@@ -156,12 +173,34 @@ export default function AuditDetail() {
                   )}
                 </Card>
               </View>
-              {query.data.changes &&
+              {query.data.field_changes !== undefined ? (
+                <AuditChanges changes={query.data.field_changes} />
+              ) : (
+                query.data.changes &&
                 Object.entries(query.data.changes).map(([key, value]) => (
                   <Card key={key}>
                     <Label size="caption">{key}</Label>
                     <Label>{JSON.stringify(value)}</Label>
                   </Card>
+                ))
+              )}
+              {query.data.related
+                ?.filter((item) => snapshot.modules[item.resource])
+                .map((item) => (
+                  <Button
+                    key={`${item.resource}:${item.id}`}
+                    label={
+                      item.resource === "users" ? t("detail") : "Role details"
+                    }
+                    variant="secondary"
+                    onPress={() =>
+                      router.push(
+                        item.resource === "users"
+                          ? `/users/${item.id}`
+                          : `/roles/${item.id}`,
+                      )
+                    }
+                  />
                 ))}
             </>
           )

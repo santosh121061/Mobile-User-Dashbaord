@@ -26,15 +26,17 @@ export default function TabsLayout() {
         tabBarLabelPosition: mode === "sidebar" ? "beside-icon" : "below-icon",
         tabBarActiveTintColor: colors.brand.primary,
         tabBarInactiveTintColor: colors.text.secondary,
-        tabBarActiveBackgroundColor: "transparent",
+        tabBarActiveBackgroundColor: "#EEF4FF",
         tabBarInactiveBackgroundColor: "transparent",
-        tabBarItemStyle: { minHeight: 52, marginEnd: 4 },
-        tabBarIconStyle: { width: 36, height: 27 },
+        tabBarItemStyle: { minHeight: 48, marginEnd: 4 },
+        tabBarIconStyle: { width: 28, height: 23 },
         tabBarLabel: ({ children, color, focused }) => (
           <Label
             size="micro"
             style={{
               color,
+              fontSize: 10,
+              lineHeight: 16,
               fontFamily: focused ? "Inter_600SemiBold" : "Inter_500Medium",
               textAlign: mode === "sidebar" ? "left" : "center",
               maxWidth: mode === "rail" ? 64 : mode === "sidebar" ? 160 : 88,
@@ -45,7 +47,7 @@ export default function TabsLayout() {
         ),
         tabBarLabelStyle: {
           fontFamily: "Inter_500Medium",
-          fontSize: 12,
+          fontSize: 10,
         },
         tabBarStyle: {
           display: mode === "tabs" ? "flex" : "none",
@@ -53,19 +55,19 @@ export default function TabsLayout() {
           borderWidth: 1,
           borderBottomWidth: 0,
           borderColor: colors.divider + "A6",
-          boxShadow: "0px -3px 18px rgba(40,81,138,0.023529)",
-          borderTopLeftRadius: 25,
-          borderTopRightRadius: 25,
+          boxShadow: "0px -3px 12px rgba(27,58,101,0.06)",
+          borderTopLeftRadius: 17,
+          borderTopRightRadius: 17,
           overflow: "hidden",
           ...(mode === "tabs"
             ? {
                 height:
-                  61 +
+                  54 +
                   Math.max(0, fontScale - 1) * 32 +
-                  Math.max(18, insets.bottom),
-                paddingTop: 8,
-                paddingBottom: Math.max(18, insets.bottom),
-                paddingHorizontal: 12,
+                  Math.max(12, insets.bottom),
+                paddingTop: 6,
+                paddingBottom: Math.max(12, insets.bottom),
+                paddingHorizontal: 8,
               }
             : {
                 width: mode === "rail" ? 72 : 240,
@@ -86,26 +88,27 @@ export default function TabsLayout() {
             options={{
               title: t(item.label),
               tabBarItemStyle: moduleAvailable(item, bootstrap)
-                ? { minHeight: 52, marginEnd: name === "more" ? 0 : 4 }
+                ? { minHeight: 48, marginEnd: name === "more" ? 0 : 4 }
                 : { display: "none" },
-              tabBarButton: (props) => moduleAvailable(item, bootstrap) ? (
-                <Link href={item.route} asChild>
-                  <Pressable
-                    {...props}
-                    ref={undefined}
-                    style={StyleSheet.flatten([
-                      props.style,
-                      {
-                        paddingVertical: 2,
-                        paddingHorizontal: 6,
-                        gap: 3,
-                        justifyContent: "center",
-                        borderRadius: 14,
-                      },
-                    ])}
-                  />
-                </Link>
-              ) : null,
+              tabBarButton: (props) =>
+                moduleAvailable(item, bootstrap) ? (
+                  <Link href={item.route} asChild>
+                    <Pressable
+                      {...props}
+                      ref={undefined}
+                      style={StyleSheet.flatten([
+                        props.style,
+                        {
+                          paddingVertical: 2,
+                          paddingHorizontal: 6,
+                          gap: 1,
+                          justifyContent: "center",
+                          borderRadius: 10,
+                        },
+                      ])}
+                    />
+                  </Link>
+                ) : null,
               tabBarIcon: ({ color }) => (
                 <NavigationGlyph
                   name={name}

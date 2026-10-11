@@ -19,12 +19,18 @@ export function RootHeader({
   children,
 }: React.PropsWithChildren<{ title?: string; subtitle?: string }>) {
   const { width } = useWindowDimensions();
+  const { colors } = useTheme();
   const branding = useBranding();
   return (
     <View
       style={{
-        minHeight: 70,
-        paddingBottom: 2,
+        minHeight: 66,
+        marginHorizontal: width < 600 ? -16 : -24,
+        paddingHorizontal: width <= 330 ? 10 : 16,
+        paddingTop: 5,
+        paddingBottom: 9,
+        borderBottomWidth: 1,
+        borderColor: colors.border + "9E",
         flexDirection: "row",
         alignItems: "center",
         gap: 11,
@@ -41,16 +47,31 @@ export function RootHeader({
       >
         {title ? (
           <>
-            {width < 600 && <BrandMark />}
-            <Label size={width < 600 ? "h1" : "appbar"} style={{ flex: 1 }}>
+            {width < 600 && <BrandMark size={width <= 330 ? 32 : 36} />}
+            <Label
+              size={width < 600 ? "h1" : "appbar"}
+              style={{
+                flex: 1,
+                fontSize: width <= 330 ? 18 : 21,
+                lineHeight: 27,
+                fontFamily:
+                  width < 600 ? "Inter_700Bold21" : "Inter_600SemiBold22",
+                letterSpacing: -0.65,
+              }}
+            >
               {title}
             </Label>
           </>
         ) : (
           <>
-            {width < 600 && <BrandMark />}
+            {width < 600 && <BrandMark size={width <= 330 ? 32 : 36} />}
             <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
-              <Label size="appbar">{branding?.name ?? t("workspace")}</Label>
+              <Label
+                size="appbar"
+                style={{ fontSize: width <= 330 ? 20 : 22, lineHeight: 30 }}
+              >
+                {branding?.name ?? t("workspace")}
+              </Label>
               {!!subtitle && (
                 <Label size="secondary" tone="secondary">
                   {subtitle}
@@ -73,14 +94,20 @@ export function BackHeader({
   fallback?: "/" | "/(auth)/login";
 }) {
   const { colors } = useTheme();
+  const { width } = useWindowDimensions();
   return (
     <View
       style={{
-        minHeight: 64,
-        paddingBottom: 4,
+        minHeight: 66,
+        marginHorizontal: width < 600 ? -16 : -24,
+        paddingHorizontal: width <= 330 ? 10 : 16,
+        paddingTop: 5,
+        paddingBottom: 9,
+        borderBottomWidth: 1,
+        borderColor: colors.border + "9E",
         flexDirection: "row",
         alignItems: "center",
-        gap: 10,
+        gap: 6,
       }}
     >
       <Pressable
@@ -92,7 +119,7 @@ export function BackHeader({
         style={{
           width: 48,
           height: 48,
-          marginStart: -10,
+          marginStart: -12,
           alignItems: "center",
           justifyContent: "center",
         }}
@@ -112,7 +139,7 @@ export function BackHeader({
 
 export function AuthArtwork() {
   const { colors, dark } = useTheme();
-  const { width, height } = useWindowDimensions();
+  const { height } = useWindowDimensions();
   if (height < 480) return null;
   return (
     <View
@@ -123,7 +150,7 @@ export function AuthArtwork() {
         height: 128,
         alignItems: "center",
         justifyContent: "center",
-        marginTop: width >= 600 ? 25 : 10,
+        marginTop: 8,
         marginBottom: 22,
       }}
     >

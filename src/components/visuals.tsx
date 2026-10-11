@@ -15,6 +15,7 @@ import { useTheme, tokens } from "@/theme";
 
 export function dashboardCardStyle(dark: boolean): ViewStyle {
   return {
+    borderRadius: 20,
     borderColor: dark ? "#29415B" : "#EAF0FA",
     boxShadow: `0px 4px 18px ${dark ? "rgba(0,0,0,0.1)" : "rgba(76,112,170,0.045)"}`,
   };
@@ -27,13 +28,17 @@ export function IconButton({
   disabled = false,
   inField = false,
   variant = "plain",
+  visualSize = 40,
+  round = false,
 }: {
   label: string;
   children: React.ReactNode;
   onPress: () => void;
   disabled?: boolean;
   inField?: boolean;
-  variant?: "plain" | "accent" | "surface";
+  variant?: "plain" | "accent" | "surface" | "muted";
+  visualSize?: number;
+  round?: boolean;
 }) {
   const { colors } = useTheme();
   return (
@@ -53,19 +58,33 @@ export function IconButton({
         marginVertical: inField ? -1 : 0,
         alignItems: "center",
         justifyContent: "center",
-        borderRadius: 16,
-        backgroundColor:
-          pressed || variant === "accent"
-            ? colors.brand.primarySoft
-            : variant === "surface"
-              ? colors.surface
-              : "transparent",
-        borderWidth: variant === "surface" ? 1 : 0,
-        borderColor: colors.border,
+        borderRadius: round ? 24 : 11,
         transform: [{ scale: pressed ? 0.95 : 1 }],
       })}
     >
-      {children}
+      {({ pressed }) => (
+        <View
+          style={{
+            width: inField ? 30 : visualSize,
+            minHeight: inField ? 40 : visualSize,
+            borderRadius: round ? visualSize / 2 : 11,
+            alignItems: "center",
+            justifyContent: "center",
+            backgroundColor:
+              pressed || variant === "accent"
+                ? colors.brand.primarySoft
+                : variant === "muted"
+                  ? colors.surfaceMuted
+                  : variant === "surface"
+                    ? colors.surface
+                    : "transparent",
+            borderWidth: variant === "surface" ? 1 : 0,
+            borderColor: colors.border,
+          }}
+        >
+          {children}
+        </View>
+      )}
     </Pressable>
   );
 }
@@ -86,22 +105,20 @@ export function SearchLauncher({
       accessibilityLabel={label}
       onPress={onPress}
       style={({ pressed }) => ({
-        minHeight: 52,
-        paddingHorizontal: 16,
+        minHeight: 48,
+        paddingHorizontal: 14,
         paddingVertical: 12,
-        borderRadius: 16,
+        borderRadius: 11,
         borderWidth: 1,
-        borderColor: "transparent",
-        backgroundColor: pressed
-          ? colors.brand.primarySoft
-          : colors.surfaceMuted,
+        borderColor: colors.border,
+        backgroundColor: pressed ? colors.brand.primarySoft : colors.surface,
         flexDirection: "row",
         alignItems: "center",
         gap: 12,
       })}
     >
       <Search size={22} color={colors.text.secondary} />
-      <Label tone="secondary" style={{ flex: 1 }}>
+      <Label tone="secondary" style={{ flex: 1, fontSize: 14, lineHeight: 22 }}>
         {displayLabel ?? label}
       </Label>
     </Pressable>

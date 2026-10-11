@@ -7,6 +7,8 @@ import { useFeatureWork } from "./use-feature-work";
 export type ActivityCriteria = {
   search: string;
   state?: "success" | "denied" | "failed";
+  category?: "users" | "security" | "reports";
+  period?: "today" | "7d" | "all";
 };
 
 /** Probe the same authorized, ordered first page without changing the visible list cache. */

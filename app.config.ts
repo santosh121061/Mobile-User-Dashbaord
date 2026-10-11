@@ -17,10 +17,11 @@ if (
 const config: ExpoConfig = {
   name: "User Dashboard",
   slug: "user-dashboard-development",
-  version: "0.1.0",
+  version: "0.1.2",
   orientation: "default",
   userInterfaceStyle: "automatic",
-  icon: "./assets/development-mark.png",
+  icon: "./assets/branding/compact-logo.jpg",
+  web: { favicon: "./assets/branding/favicon.png" },
   scheme: process.env.APP_LINK_SCHEME ?? "userdashboard-dev",
   ios: {
     supportsTablet: true,
@@ -33,10 +34,11 @@ const config: ExpoConfig = {
   },
   android: {
     package: process.env.APP_ANDROID_PACKAGE ?? "com.example.userdashboard.dev",
+    versionCode: 3,
     permissions: [],
     adaptiveIcon: {
-      foregroundImage: "./assets/development-mark.png",
-      backgroundColor: "#2563EB",
+      foregroundImage: "./assets/branding/adaptive-foreground.png",
+      backgroundColor: "#008836",
     },
   },
   plugins: [
@@ -67,7 +69,7 @@ const config: ExpoConfig = {
     [
       "expo-splash-screen",
       {
-        image: "./assets/development-mark.png",
+        image: "./assets/branding/compact-logo.jpg",
         imageWidth: 80,
         backgroundColor: "#F7FAFF",
         dark: { backgroundColor: "#0B1220" },

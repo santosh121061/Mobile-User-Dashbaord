@@ -188,7 +188,11 @@
                                     "properties": {
                                         "message": {
                                             "type": "string",
-                                            "const": "Password reset. Sign in again."
+                                            "enum": [
+                                                "Password reset. Sign in again.",
+                                                "Password reset. Sign in when your account is enabled and eligible."
+                                            ],
+                                            "description": "Password setup leaves a pending account pending; eligibility and administrator activation remain separate."
                                         }
                                     },
                                     "required": [
@@ -204,7 +208,8 @@
                     "422": {
                         "$ref": "#/components/responses/ValidationException"
                     }
-                }
+                },
+                "description": "Credential setup never implicitly activates pending accounts. Source pure tests cover quoted RFC email spaces and control rejection; actual database reset/eligibility flow remains unverified."
             }
         },
         "/v1/auth/verification-resend": {
@@ -329,6 +334,33 @@
                                                 "appearance": {
                                                     "type": "object",
                                                     "additionalProperties": {}
+                                                },
+                                                "lifecycle_status": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "active",
+                                                        "pending",
+                                                        "suspended",
+                                                        "disabled",
+                                                        "archived"
+                                                    ],
+                                                    "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
+                                                },
+                                                "is_owner": {
+                                                    "type": "boolean",
+                                                    "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
+                                                },
+                                                "last_active_at": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
+                                                },
+                                                "password_setup_required": {
+                                                    "type": "boolean",
+                                                    "description": "Derived from existing credentials; true means authentication still requires password setup, independently of lifecycle status.",
+                                                    "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
                                                 }
                                             },
                                             "required": [
@@ -404,11 +436,11 @@
                             }
                         }
                     },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationException"
-                    },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
                     }
                 }
             }
@@ -564,6 +596,33 @@
                                                 "appearance": {
                                                     "type": "object",
                                                     "additionalProperties": {}
+                                                },
+                                                "lifecycle_status": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "active",
+                                                        "pending",
+                                                        "suspended",
+                                                        "disabled",
+                                                        "archived"
+                                                    ],
+                                                    "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
+                                                },
+                                                "is_owner": {
+                                                    "type": "boolean",
+                                                    "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
+                                                },
+                                                "last_active_at": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
+                                                },
+                                                "password_setup_required": {
+                                                    "type": "boolean",
+                                                    "description": "Derived from existing credentials; true means authentication still requires password setup, independently of lifecycle status.",
+                                                    "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
                                                 }
                                             },
                                             "required": [
@@ -664,11 +723,11 @@
                             }
                         }
                     },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationException"
-                    },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
                     }
                 }
             }
@@ -725,11 +784,11 @@
                             }
                         }
                     },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationException"
-                    },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
                     }
                 }
             }
@@ -911,11 +970,11 @@
                             }
                         }
                     },
-                    "404": {
-                        "$ref": "#/components/responses/ModelNotFoundException"
-                    },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
                     }
                 }
             }
@@ -929,6 +988,9 @@
                 "responses": {
                     "204": {
                         "description": "No content"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
                     },
                     "403": {
                         "description": "An error",
@@ -951,9 +1013,6 @@
                                 }
                             }
                         }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
                     }
                 }
             }
@@ -1032,6 +1091,33 @@
                                                             "name"
                                                         ]
                                                     }
+                                                },
+                                                "lifecycle_status": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "active",
+                                                        "pending",
+                                                        "suspended",
+                                                        "disabled",
+                                                        "archived"
+                                                    ],
+                                                    "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
+                                                },
+                                                "is_owner": {
+                                                    "type": "boolean",
+                                                    "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
+                                                },
+                                                "last_active_at": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
+                                                },
+                                                "password_setup_required": {
+                                                    "type": "boolean",
+                                                    "description": "Derived from existing credentials; true means authentication still requires password setup, independently of lifecycle status.",
+                                                    "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
                                                 }
                                             },
                                             "required": [
@@ -1082,11 +1168,15 @@
                             ],
                             "enum": [
                                 "enabled",
+                                "active",
+                                "pending",
+                                "suspended",
                                 "disabled",
                                 "archived",
                                 null
                             ]
-                        }
+                        },
+                        "description": "enabled remains an active alias; lifecycle filters include pending and suspended."
                     },
                     {
                         "name": "role",
@@ -1120,6 +1210,56 @@
                             ],
                             "minimum": 1
                         }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "name_asc",
+                                "name_desc",
+                                "recent"
+                            ]
+                        },
+                        "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
+                    },
+                    {
+                        "name": "verification",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "enum": [
+                                "verified",
+                                "unverified",
+                                null
+                            ]
+                        },
+                        "description": "Optional nullable verification filter; combines with search, role, dates and record scope.",
+                        "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
+                    },
+                    {
+                        "name": "from",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        },
+                        "description": "Independent inclusive actor-local calendar-day lower bound.",
+                        "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
+                    },
+                    {
+                        "name": "to",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        },
+                        "description": "Independent actor-local upper day, inclusive through exclusive next midnight.",
+                        "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
                     }
                 ],
                 "responses": {
@@ -1191,6 +1331,33 @@
                                                                 "name"
                                                             ]
                                                         }
+                                                    },
+                                                    "lifecycle_status": {
+                                                        "type": "string",
+                                                        "enum": [
+                                                            "active",
+                                                            "pending",
+                                                            "suspended",
+                                                            "disabled",
+                                                            "archived"
+                                                        ],
+                                                        "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
+                                                    },
+                                                    "is_owner": {
+                                                        "type": "boolean",
+                                                        "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
+                                                    },
+                                                    "last_active_at": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ],
+                                                        "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
+                                                    },
+                                                    "password_setup_required": {
+                                                        "type": "boolean",
+                                                        "description": "Derived from existing credentials; true means authentication still requires password setup, independently of lifecycle status.",
+                                                        "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
                                                     }
                                                 },
                                                 "required": [
@@ -1213,6 +1380,39 @@
                                                 },
                                                 "per_page": {
                                                     "type": "integer"
+                                                },
+                                                "status_counts": {
+                                                    "type": [
+                                                        "object",
+                                                        "null"
+                                                    ],
+                                                    "properties": {
+                                                        "active": {
+                                                            "type": "integer",
+                                                            "minimum": 0
+                                                        },
+                                                        "pending": {
+                                                            "type": "integer",
+                                                            "minimum": 0
+                                                        },
+                                                        "suspended": {
+                                                            "type": "integer",
+                                                            "minimum": 0
+                                                        },
+                                                        "disabled": {
+                                                            "type": "integer",
+                                                            "minimum": 0
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "active",
+                                                        "pending",
+                                                        "suspended",
+                                                        "disabled"
+                                                    ],
+                                                    "additionalProperties": false,
+                                                    "description": "Scoped unarchived counts using search, role, verification and dates, ignoring selected state; null when status visibility is denied.",
+                                                    "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
                                                 }
                                             },
                                             "required": [
@@ -1231,17 +1431,17 @@
                             }
                         }
                     },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationException"
-                    },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
                     }
                 }
             },
             "post": {
                 "operationId": "adminApi.store",
-                "summary": "Create an account with a password. Role/owner grants require their own key abilities",
+                "summary": "Create an account with the existing password contract or developing password-link provisioning",
                 "tags": [
                     "AdminApi"
                 ],
@@ -1250,54 +1450,62 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "name": {
-                                        "type": "string",
-                                        "examples": [
-                                            "New colleague"
+                                "oneOf": [
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "name": {
+                                                "type": "string",
+                                                "examples": [
+                                                    "New colleague"
+                                                ]
+                                            },
+                                            "email": {
+                                                "type": "string",
+                                                "format": "email",
+                                                "examples": [
+                                                    "colleague@example.test"
+                                                ]
+                                            },
+                                            "status": {
+                                                "type": "string",
+                                                "examples": [
+                                                    "enabled"
+                                                ]
+                                            },
+                                            "role_ids": {
+                                                "type": "array",
+                                                "examples": [
+                                                    []
+                                                ],
+                                                "items": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "password": {
+                                                "type": "string",
+                                                "format": "password",
+                                                "description": "At least 12 characters, mixed case, number and symbol; required for new accounts."
+                                            },
+                                            "owner": {
+                                                "type": "boolean",
+                                                "description": "Explicit governance membership; requires access.owners and an existing owner.",
+                                                "examples": [
+                                                    false
+                                                ]
+                                            },
+                                            "provisioning": false
+                                        },
+                                        "required": [
+                                            "name",
+                                            "email",
+                                            "status",
+                                            "role_ids"
                                         ]
                                     },
-                                    "email": {
-                                        "type": "string",
-                                        "format": "email",
-                                        "examples": [
-                                            "colleague@example.test"
-                                        ]
-                                    },
-                                    "status": {
-                                        "type": "string",
-                                        "examples": [
-                                            "enabled"
-                                        ]
-                                    },
-                                    "role_ids": {
-                                        "type": "array",
-                                        "examples": [
-                                            []
-                                        ],
-                                        "items": {
-                                            "type": "integer"
-                                        }
-                                    },
-                                    "password": {
-                                        "type": "string",
-                                        "format": "password",
-                                        "description": "At least 12 characters, mixed case, number and symbol; required for new accounts."
-                                    },
-                                    "owner": {
-                                        "type": "boolean",
-                                        "description": "Explicit governance membership; requires access.owners and an existing owner.",
-                                        "examples": [
-                                            false
-                                        ]
+                                    {
+                                        "$ref": "#/components/schemas/PasswordLinkUserCreate"
                                     }
-                                },
-                                "required": [
-                                    "name",
-                                    "email",
-                                    "status",
-                                    "role_ids"
                                 ]
                             }
                         }
@@ -1370,6 +1578,33 @@
                                                             "name"
                                                         ]
                                                     }
+                                                },
+                                                "lifecycle_status": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "active",
+                                                        "pending",
+                                                        "suspended",
+                                                        "disabled",
+                                                        "archived"
+                                                    ],
+                                                    "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
+                                                },
+                                                "is_owner": {
+                                                    "type": "boolean",
+                                                    "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
+                                                },
+                                                "last_active_at": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
+                                                },
+                                                "password_setup_required": {
+                                                    "type": "boolean",
+                                                    "description": "Derived from existing credentials; true means authentication still requires password setup, independently of lifecycle status.",
+                                                    "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
                                                 }
                                             },
                                             "required": [
@@ -1387,6 +1622,9 @@
                     },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
                     }
                 }
             }
@@ -1475,6 +1713,33 @@
                                                             "name"
                                                         ]
                                                     }
+                                                },
+                                                "lifecycle_status": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "active",
+                                                        "pending",
+                                                        "suspended",
+                                                        "disabled",
+                                                        "archived"
+                                                    ],
+                                                    "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
+                                                },
+                                                "is_owner": {
+                                                    "type": "boolean",
+                                                    "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
+                                                },
+                                                "last_active_at": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
+                                                },
+                                                "password_setup_required": {
+                                                    "type": "boolean",
+                                                    "description": "Derived from existing credentials; true means authentication still requires password setup, independently of lifecycle status.",
+                                                    "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
                                                 }
                                             },
                                             "required": [
@@ -1490,14 +1755,14 @@
                             }
                         }
                     },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
                     "403": {
                         "$ref": "#/components/responses/AuthorizationException"
                     },
                     "404": {
                         "$ref": "#/components/responses/ModelNotFoundException"
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
                     }
                 }
             },
@@ -1546,7 +1811,38 @@
                                     },
                                     "owner": {
                                         "type": "boolean"
-                                    }
+                                    },
+                                    "first_name": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 100
+                                    },
+                                    "last_name": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 100
+                                    },
+                                    "phone": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "description": "Update phone normalization/optionality remains subject to existing server validation."
+                                    },
+                                    "lifecycle_status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "active",
+                                            "pending",
+                                            "suspended",
+                                            "disabled"
+                                        ]
+                                    },
+                                    "provisioning": false
                                 }
                             }
                         }
@@ -1619,6 +1915,33 @@
                                                             "name"
                                                         ]
                                                     }
+                                                },
+                                                "lifecycle_status": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "active",
+                                                        "pending",
+                                                        "suspended",
+                                                        "disabled",
+                                                        "archived"
+                                                    ],
+                                                    "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
+                                                },
+                                                "is_owner": {
+                                                    "type": "boolean",
+                                                    "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
+                                                },
+                                                "last_active_at": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
+                                                },
+                                                "password_setup_required": {
+                                                    "type": "boolean",
+                                                    "description": "Derived from existing credentials; true means authentication still requires password setup, independently of lifecycle status.",
+                                                    "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
                                                 }
                                             },
                                             "required": [
@@ -1634,13 +1957,17 @@
                             }
                         }
                     },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
                     "404": {
                         "$ref": "#/components/responses/ModelNotFoundException"
                     },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
                     }
-                }
+                },
+                "description": "Legacy disabled round trips preserve pending/suspended stored states. Provisioning is prohibited. Owner pending/suspended changes return errors.status validation 422."
             }
         },
         "/v1/users/{user}/avatar": {
@@ -1762,6 +2089,33 @@
                                                             "name"
                                                         ]
                                                     }
+                                                },
+                                                "lifecycle_status": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "active",
+                                                        "pending",
+                                                        "suspended",
+                                                        "disabled",
+                                                        "archived"
+                                                    ],
+                                                    "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
+                                                },
+                                                "is_owner": {
+                                                    "type": "boolean",
+                                                    "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
+                                                },
+                                                "last_active_at": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
+                                                },
+                                                "password_setup_required": {
+                                                    "type": "boolean",
+                                                    "description": "Derived from existing credentials; true means authentication still requires password setup, independently of lifecycle status.",
+                                                    "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
                                                 }
                                             },
                                             "required": [
@@ -1777,14 +2131,14 @@
                             }
                         }
                     },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationException"
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
                     },
                     "404": {
                         "$ref": "#/components/responses/ModelNotFoundException"
                     },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
                     }
                 }
             },
@@ -1816,11 +2170,11 @@
                             }
                         }
                     },
-                    "404": {
-                        "$ref": "#/components/responses/ModelNotFoundException"
-                    },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
                     }
                 }
             }
@@ -1860,15 +2214,7 @@
                                     "properties": {
                                         "message": {
                                             "type": "string",
-                                            "enum": [
-                                                "Account enabled.",
-                                                "Account disabled. Active sessions and API keys were revoked.",
-                                                "Account archived and signed out.",
-                                                "Account restored as disabled.",
-                                                "Archived account permanently deleted.",
-                                                "Active sessions and API keys were revoked.",
-                                                "A password reset email was queued for this account."
-                                            ]
+                                            "description": "Server-supplied acknowledgement; developing actions do not invent or require new message text."
                                         }
                                     },
                                     "required": [
@@ -1877,6 +2223,15 @@
                                 }
                             }
                         }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
                     },
                     "422": {
                         "description": "An error",
@@ -1899,14 +2254,9 @@
                                 }
                             }
                         }
-                    },
-                    "404": {
-                        "$ref": "#/components/responses/ModelNotFoundException"
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
                     }
-                }
+                },
+                "description": "Suspend/reactivate use users.status, record scope and status-edit authority; no request body. Idempotent: suspend accepts active/suspended, reactivate accepts pending/suspended/active. Actual changes revoke sessions/tokens and increment access revision. Archived targets require restore (422); governance Owners return 422, or authorization may deny earlier with 403."
             }
         },
         "/v1/roles": {
@@ -1951,6 +2301,54 @@
                                                                 "name"
                                                             ]
                                                         }
+                                                    },
+                                                    "description": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ],
+                                                        "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
+                                                    },
+                                                    "default_scope": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ],
+                                                        "enum": [
+                                                            "all",
+                                                            "self",
+                                                            "created",
+                                                            "assigned",
+                                                            null
+                                                        ],
+                                                        "description": "Derived unique canonical scope; null for mixed/no scopes.",
+                                                        "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
+                                                    },
+                                                    "assigned_count": {
+                                                        "type": [
+                                                            "integer",
+                                                            "null"
+                                                        ],
+                                                        "minimum": 0,
+                                                        "description": "All visible unarchived lifecycle states; null when users-view access is unavailable.",
+                                                        "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
+                                                    },
+                                                    "can_edit": {
+                                                        "type": "boolean",
+                                                        "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
+                                                    },
+                                                    "updated_at": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ],
+                                                        "format": "date-time",
+                                                        "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
+                                                    },
+                                                    "assigned_count_scope": {
+                                                        "type": "string",
+                                                        "const": "visible_unarchived_accounts",
+                                                        "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
                                                     }
                                                 },
                                                 "required": [
@@ -1984,60 +2382,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "name": {
-                                        "type": "string",
-                                        "examples": [
-                                            "Reviewer"
-                                        ]
-                                    },
-                                    "grants": {
-                                        "type": "array",
-                                        "examples": [
-                                            [
-                                                "users.view"
-                                            ]
-                                        ],
-                                        "items": {
-                                            "type": "string"
-                                        }
-                                    },
-                                    "scopes": {
-                                        "type": "object",
-                                        "examples": [
-                                            {
-                                                "users.view": "self"
-                                            }
-                                        ],
-                                        "additionalProperties": {
-                                            "type": "string"
-                                        }
-                                    },
-                                    "fields": {
-                                        "type": "object",
-                                        "examples": [
-                                            {
-                                                "name": {
-                                                    "view": true,
-                                                    "edit": false
-                                                }
-                                            }
-                                        ],
-                                        "additionalProperties": {
-                                            "type": "object",
-                                            "additionalProperties": {
-                                                "type": "boolean"
-                                            }
-                                        }
-                                    }
-                                },
-                                "required": [
-                                    "name",
-                                    "grants",
-                                    "scopes",
-                                    "fields"
-                                ]
+                                "$ref": "#/components/schemas/RoleWrite"
                             }
                         }
                     }
@@ -2103,11 +2448,11 @@
                     "204": {
                         "description": "No content"
                     },
-                    "404": {
-                        "$ref": "#/components/responses/ModelNotFoundException"
-                    },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
                     }
                 }
             },
@@ -2136,60 +2481,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "name": {
-                                        "type": "string",
-                                        "examples": [
-                                            "Reviewer"
-                                        ]
-                                    },
-                                    "grants": {
-                                        "type": "array",
-                                        "examples": [
-                                            [
-                                                "users.view"
-                                            ]
-                                        ],
-                                        "items": {
-                                            "type": "string"
-                                        }
-                                    },
-                                    "scopes": {
-                                        "type": "object",
-                                        "examples": [
-                                            {
-                                                "users.view": "self"
-                                            }
-                                        ],
-                                        "additionalProperties": {
-                                            "type": "string"
-                                        }
-                                    },
-                                    "fields": {
-                                        "type": "object",
-                                        "examples": [
-                                            {
-                                                "name": {
-                                                    "view": true,
-                                                    "edit": false
-                                                }
-                                            }
-                                        ],
-                                        "additionalProperties": {
-                                            "type": "object",
-                                            "additionalProperties": {
-                                                "type": "boolean"
-                                            }
-                                        }
-                                    }
-                                },
-                                "required": [
-                                    "name",
-                                    "grants",
-                                    "scopes",
-                                    "fields"
-                                ]
+                                "$ref": "#/components/schemas/RoleWrite"
                             }
                         }
                     }
@@ -2278,7 +2570,7 @@
                                                                 "type": "string"
                                                             },
                                                             "scope": {
-                                                                "type": "string"
+                                                                "$ref": "#/components/schemas/RoleScope"
                                                             }
                                                         },
                                                         "required": [
@@ -2314,6 +2606,66 @@
                                                             "can_edit"
                                                         ]
                                                     }
+                                                },
+                                                "description": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
+                                                },
+                                                "default_scope": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "enum": [
+                                                        "all",
+                                                        "self",
+                                                        "created",
+                                                        "assigned",
+                                                        null
+                                                    ],
+                                                    "description": "Derived unique canonical scope; null for mixed/no scopes.",
+                                                    "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
+                                                },
+                                                "assigned_count": {
+                                                    "type": [
+                                                        "integer",
+                                                        "null"
+                                                    ],
+                                                    "minimum": 0,
+                                                    "description": "All visible unarchived lifecycle states; null when users-view access is unavailable.",
+                                                    "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
+                                                },
+                                                "can_edit": {
+                                                    "type": "boolean",
+                                                    "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
+                                                },
+                                                "updated_at": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "format": "date-time",
+                                                    "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
+                                                },
+                                                "assigned_count_scope": {
+                                                    "type": "string",
+                                                    "const": "visible_unarchived_accounts",
+                                                    "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
+                                                },
+                                                "capability_availability": {
+                                                    "type": "object",
+                                                    "additionalProperties": {
+                                                        "type": "boolean"
+                                                    },
+                                                    "x-contract-status": "Announced local Laravel source contract; generated artifact and deployment not verified"
+                                                },
+                                                "availability_revision": {
+                                                    "type": "string",
+                                                    "pattern": "^[a-f0-9]{64}$",
+                                                    "x-contract-status": "Announced local Laravel source contract; generated artifact and deployment not verified"
                                                 }
                                             },
                                             "required": [
@@ -2332,11 +2684,11 @@
                             }
                         }
                     },
-                    "404": {
-                        "$ref": "#/components/responses/ModelNotFoundException"
-                    },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
                     }
                 }
             }
@@ -2439,11 +2791,11 @@
                             }
                         }
                     },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationException"
-                    },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
                     }
                 }
             }
@@ -2468,11 +2820,11 @@
                     "204": {
                         "description": "No content"
                     },
-                    "404": {
-                        "$ref": "#/components/responses/ModelNotFoundException"
-                    },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
                     }
                 }
             }
@@ -2533,6 +2885,92 @@
                             ],
                             "minimum": 1
                         }
+                    },
+                    {
+                        "name": "category",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "users",
+                                "security",
+                                "reports"
+                            ]
+                        },
+                        "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
+                    },
+                    {
+                        "name": "period",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "today",
+                                "7d",
+                                "all"
+                            ]
+                        },
+                        "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified",
+                        "description": "today/7d cannot be combined with explicit dates; all allows dates."
+                    },
+                    {
+                        "name": "from",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        },
+                        "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified",
+                        "description": "Actor-local calendar bounds; from inclusive midnight, to through exclusive next midnight. Incompatible with today/7d."
+                    },
+                    {
+                        "name": "to",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        },
+                        "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified",
+                        "description": "Actor-local calendar bounds; from inclusive midnight, to through exclusive next midnight. Incompatible with today/7d."
+                    },
+                    {
+                        "name": "actor_id",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        },
+                        "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
+                    },
+                    {
+                        "name": "subject_type",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "user",
+                                "role"
+                            ]
+                        },
+                        "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
+                    },
+                    {
+                        "name": "subject_id",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        },
+                        "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified",
+                        "description": "Requires subject_type."
+                    },
+                    {
+                        "name": "outcome",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
                     }
                 ],
                 "responses": {
@@ -2546,8 +2984,7 @@
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "type": "object",
-                                                "additionalProperties": {}
+                                                "$ref": "#/components/schemas/AuditEvent"
                                             }
                                         },
                                         "current_page": {
@@ -2640,13 +3077,14 @@
                             }
                         }
                     },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationException"
-                    },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
                     }
-                }
+                },
+                "description": "Preserves Laravel paginator envelope, actor record scope and field redaction. Relative periods cannot be combined with dates; subject ID requires alias subject type."
             }
         },
         "/v1/users/{user}/access": {
@@ -2685,6 +3123,9 @@
                             }
                         }
                     },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
                     "403": {
                         "description": "An error",
                         "content": {
@@ -2709,9 +3150,6 @@
                     },
                     "404": {
                         "$ref": "#/components/responses/ModelNotFoundException"
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
                     }
                 }
             },
@@ -2747,7 +3185,12 @@
                                             }
                                         ],
                                         "additionalProperties": {
-                                            "type": "string"
+                                            "type": "string",
+                                            "enum": [
+                                                "inherit",
+                                                "allow",
+                                                "deny"
+                                            ]
                                         }
                                     },
                                     "scopes": {
@@ -2773,9 +3216,29 @@
                                         ],
                                         "additionalProperties": {
                                             "type": "object",
-                                            "additionalProperties": {
-                                                "type": "string"
-                                            }
+                                            "properties": {
+                                                "view": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "inherit",
+                                                        "allow",
+                                                        "deny"
+                                                    ]
+                                                },
+                                                "edit": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "inherit",
+                                                        "allow",
+                                                        "deny"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "view",
+                                                "edit"
+                                            ],
+                                            "additionalProperties": false
                                         }
                                     },
                                     "assigned_ids": {
@@ -2784,8 +3247,26 @@
                                             []
                                         ],
                                         "items": {
-                                            "type": "integer"
-                                        }
+                                            "type": "integer",
+                                            "minimum": 1
+                                        },
+                                        "maxItems": 500,
+                                        "uniqueItems": true,
+                                        "description": "Always replaces the complete desired assignment list, including in patch mode. IDs must exist."
+                                    },
+                                    "availability_revision": {
+                                        "type": "string",
+                                        "pattern": "^[a-f0-9]{64}$",
+                                        "x-contract-status": "Announced local Laravel source contract; generated artifact and deployment not verified"
+                                    },
+                                    "update_mode": {
+                                        "type": "string",
+                                        "enum": [
+                                            "patch",
+                                            "replace"
+                                        ],
+                                        "description": "Patch supplied direct-user rules while preserving omitted active entries. Omission or replace retains legacy replacement semantics for active effects/scopes. Explicit inherit resets a supplied active rule; inactive entries remain stored in both modes.",
+                                        "x-contract-status": "Confirmed final local Laravel source a2529f10; actual generated artifact transfer and deployment not verified"
                                     }
                                 },
                                 "required": [
@@ -2818,11 +3299,11 @@
                             }
                         }
                     },
-                    "404": {
-                        "$ref": "#/components/responses/ModelNotFoundException"
-                    },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
                     }
                 }
             }
@@ -2956,11 +3437,11 @@
                             }
                         }
                     },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationException"
-                    },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
                     }
                 }
             }
@@ -3089,14 +3570,14 @@
                             }
                         }
                     },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
                     "404": {
                         "$ref": "#/components/responses/ModelNotFoundException"
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationException"
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
                     }
                 }
             }
@@ -3158,14 +3639,14 @@
                             }
                         }
                     },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
                     "404": {
                         "$ref": "#/components/responses/ModelNotFoundException"
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationException"
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
                     }
                 }
             }
@@ -3343,6 +3824,33 @@
                                                                 "string",
                                                                 "null"
                                                             ]
+                                                        },
+                                                        "lifecycle_status": {
+                                                            "type": "string",
+                                                            "enum": [
+                                                                "active",
+                                                                "pending",
+                                                                "suspended",
+                                                                "disabled",
+                                                                "archived"
+                                                            ],
+                                                            "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
+                                                        },
+                                                        "is_owner": {
+                                                            "type": "boolean",
+                                                            "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
+                                                        },
+                                                        "last_active_at": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ],
+                                                            "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
+                                                        },
+                                                        "password_setup_required": {
+                                                            "type": "boolean",
+                                                            "description": "Derived from existing credentials; true means authentication still requires password setup, independently of lifecycle status.",
+                                                            "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
                                                         }
                                                     },
                                                     "required": [
@@ -3455,6 +3963,18 @@
                                                 "appearance": {
                                                     "type": "object",
                                                     "additionalProperties": {}
+                                                },
+                                                "capability_availability": {
+                                                    "type": "object",
+                                                    "additionalProperties": {
+                                                        "type": "boolean"
+                                                    },
+                                                    "x-contract-status": "Announced local Laravel source contract; generated artifact and deployment not verified"
+                                                },
+                                                "availability_revision": {
+                                                    "type": "string",
+                                                    "pattern": "^[a-f0-9]{64}$",
+                                                    "x-contract-status": "Announced local Laravel source contract; generated artifact and deployment not verified"
                                                 }
                                             },
                                             "required": [
@@ -3664,6 +4184,9 @@
                             }
                         }
                     },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
                     "403": {
                         "description": "An error",
                         "content": {
@@ -3688,9 +4211,6 @@
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationException"
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
                     }
                 }
             }
@@ -3706,10 +4226,21 @@
                         "name": "period",
                         "in": "query",
                         "schema": {
-                            "type": "integer",
-                            "enum": [
-                                "7",
-                                "30"
+                            "oneOf": [
+                                {
+                                    "type": "integer",
+                                    "enum": [
+                                        7,
+                                        30
+                                    ]
+                                },
+                                {
+                                    "type": "string",
+                                    "enum": [
+                                        "7",
+                                        "30"
+                                    ]
+                                }
                             ]
                         }
                     }
@@ -3745,83 +4276,121 @@
                                                     "type": "array",
                                                     "items": {
                                                         "type": "object",
-                                                        "additionalProperties": {}
+                                                        "properties": {
+                                                            "date": {
+                                                                "type": "string",
+                                                                "description": "Actor-selected legacy display date format, not ISO date."
+                                                            },
+                                                            "label": {
+                                                                "type": "string"
+                                                            },
+                                                            "count": {
+                                                                "type": "integer",
+                                                                "minimum": 0
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "date",
+                                                            "label",
+                                                            "count"
+                                                        ]
                                                     }
                                                 },
                                                 "recent": {
                                                     "type": "array",
                                                     "items": {
-                                                        "type": "object",
-                                                        "properties": {
-                                                            "id": {
-                                                                "type": "integer"
-                                                            },
-                                                            "public_id": {
-                                                                "type": "string"
-                                                            },
-                                                            "action": {
-                                                                "type": "string"
-                                                            },
-                                                            "outcome": {
-                                                                "type": "string"
-                                                            },
-                                                            "created_at": {
-                                                                "type": "string"
-                                                            },
-                                                            "actor": {
-                                                                "type": "object",
-                                                                "properties": {
-                                                                    "public_id": {
-                                                                        "type": [
-                                                                            "string",
-                                                                            "null"
-                                                                        ]
-                                                                    },
-                                                                    "name": {
-                                                                        "type": [
-                                                                            "string",
-                                                                            "null"
-                                                                        ]
-                                                                    }
-                                                                },
-                                                                "required": [
-                                                                    "public_id",
-                                                                    "name"
-                                                                ]
-                                                            },
-                                                            "changes": {
-                                                                "anyOf": [
-                                                                    {
-                                                                        "type": "object",
-                                                                        "additionalProperties": {}
-                                                                    },
-                                                                    {
-                                                                        "type": "array"
-                                                                    }
-                                                                ]
-                                                            },
-                                                            "request_id": {
-                                                                "type": [
-                                                                    "string",
-                                                                    "null"
-                                                                ]
-                                                            }
-                                                        },
-                                                        "required": [
-                                                            "id",
-                                                            "public_id",
-                                                            "action",
-                                                            "outcome",
-                                                            "created_at",
-                                                            "actor"
-                                                        ]
+                                                        "$ref": "#/components/schemas/AuditEvent"
                                                     }
                                                 },
                                                 "timezone": {
                                                     "type": "string"
                                                 },
                                                 "period": {
-                                                    "type": "integer"
+                                                    "type": "integer",
+                                                    "enum": [
+                                                        7,
+                                                        30
+                                                    ]
+                                                },
+                                                "daily_metrics": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "total_users": {
+                                                            "type": [
+                                                                "integer",
+                                                                "null"
+                                                            ],
+                                                            "minimum": 0
+                                                        },
+                                                        "active_today": {
+                                                            "type": [
+                                                                "integer",
+                                                                "null"
+                                                            ],
+                                                            "minimum": 0
+                                                        },
+                                                        "events_today": {
+                                                            "type": [
+                                                                "integer",
+                                                                "null"
+                                                            ],
+                                                            "minimum": 0
+                                                        },
+                                                        "roles": {
+                                                            "type": [
+                                                                "integer",
+                                                                "null"
+                                                            ],
+                                                            "minimum": 0
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "total_users",
+                                                        "active_today",
+                                                        "events_today",
+                                                        "roles"
+                                                    ],
+                                                    "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
+                                                },
+                                                "activity_series": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "date": {
+                                                                "type": "string",
+                                                                "format": "date"
+                                                            },
+                                                            "label": {
+                                                                "type": "string",
+                                                                "enum": [
+                                                                    "Mon",
+                                                                    "Tue",
+                                                                    "Wed",
+                                                                    "Thu",
+                                                                    "Fri",
+                                                                    "Sat",
+                                                                    "Sun"
+                                                                ]
+                                                            },
+                                                            "count": {
+                                                                "type": "integer",
+                                                                "minimum": 0
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "date",
+                                                            "label",
+                                                            "count"
+                                                        ]
+                                                    },
+                                                    "description": "Oldest first; server zero-filled actor-local days including today. No audit access yields an empty series.",
+                                                    "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
+                                                },
+                                                "activity_precision_seconds": {
+                                                    "type": "integer",
+                                                    "const": 60,
+                                                    "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
                                                 }
                                             },
                                             "required": [
@@ -3840,13 +4409,14 @@
                             }
                         }
                     },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationException"
-                    },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
                     }
-                }
+                },
+                "description": "Calendar buckets use actor-local inclusive start and exclusive next midnight converted to UTC. Timezone comes from actor configuration (server fallback Asia/Kolkata); legacy new_users dates keep the selected date format."
             }
         },
         "/v1/mobile/users/{user}/context": {
@@ -3936,6 +4506,33 @@
                                                                     "name"
                                                                 ]
                                                             }
+                                                        },
+                                                        "lifecycle_status": {
+                                                            "type": "string",
+                                                            "enum": [
+                                                                "active",
+                                                                "pending",
+                                                                "suspended",
+                                                                "disabled",
+                                                                "archived"
+                                                            ],
+                                                            "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
+                                                        },
+                                                        "is_owner": {
+                                                            "type": "boolean",
+                                                            "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
+                                                        },
+                                                        "last_active_at": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ],
+                                                            "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
+                                                        },
+                                                        "password_setup_required": {
+                                                            "type": "boolean",
+                                                            "description": "Derived from existing credentials; true means authentication still requires password setup, independently of lifecycle status.",
+                                                            "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
                                                         }
                                                     },
                                                     "required": [
@@ -4030,6 +4627,9 @@
                             }
                         }
                     },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
                     "403": {
                         "description": "An error",
                         "content": {
@@ -4054,9 +4654,6 @@
                     },
                     "404": {
                         "$ref": "#/components/responses/ModelNotFoundException"
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
                     }
                 }
             }
@@ -4295,6 +4892,18 @@
                                                         "rules",
                                                         "fields"
                                                     ]
+                                                },
+                                                "capability_availability": {
+                                                    "type": "object",
+                                                    "additionalProperties": {
+                                                        "type": "boolean"
+                                                    },
+                                                    "x-contract-status": "Announced local Laravel source contract; generated artifact and deployment not verified"
+                                                },
+                                                "availability_revision": {
+                                                    "type": "string",
+                                                    "pattern": "^[a-f0-9]{64}$",
+                                                    "x-contract-status": "Announced local Laravel source contract; generated artifact and deployment not verified"
                                                 }
                                             },
                                             "required": [
@@ -4318,6 +4927,9 @@
                                 }
                             }
                         }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
                     },
                     "403": {
                         "description": "An error",
@@ -4343,9 +4955,6 @@
                     },
                     "404": {
                         "$ref": "#/components/responses/ModelNotFoundException"
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
                     }
                 }
             }
@@ -4362,7 +4971,16 @@
                         "in": "path",
                         "required": true,
                         "schema": {
-                            "type": "string"
+                            "oneOf": [
+                                {
+                                    "type": "integer",
+                                    "minimum": 1
+                                },
+                                {
+                                    "type": "string",
+                                    "pattern": "^[1-9][0-9]*$"
+                                }
+                            ]
                         }
                     }
                 ],
@@ -4375,7 +4993,7 @@
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "type": "string"
+                                            "$ref": "#/components/schemas/AuditEvent"
                                         }
                                     },
                                     "required": [
@@ -4385,13 +5003,14 @@
                             }
                         }
                     },
-                    "404": {
-                        "$ref": "#/components/responses/ModelNotFoundException"
-                    },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
                     }
-                }
+                },
+                "description": "Numeric event ID, same caller scope as list; inaccessible details return 404. IP and raw metadata are excluded."
             }
         },
         "/v1/notifications/summary": {
@@ -4484,6 +5103,9 @@
                             }
                         }
                     },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
                     "403": {
                         "description": "An error",
                         "content": {
@@ -4505,9 +5127,6 @@
                                 }
                             }
                         }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
                     }
                 }
             }
@@ -4637,11 +5256,11 @@
                             }
                         }
                     },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationException"
-                    },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
                     }
                 }
             }
@@ -4711,6 +5330,9 @@
                     "204": {
                         "description": "No content"
                     },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
                     "403": {
                         "description": "An error",
                         "content": {
@@ -4733,14 +5355,11 @@
                             }
                         }
                     },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationException"
-                    },
                     "404": {
                         "$ref": "#/components/responses/ModelNotFoundException"
                     },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
                     }
                 }
             }
@@ -4756,6 +5375,9 @@
                     "204": {
                         "description": "No content"
                     },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
                     "403": {
                         "description": "An error",
                         "content": {
@@ -4777,9 +5399,6 @@
                                 }
                             }
                         }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
                     }
                 }
             }
@@ -4818,6 +5437,24 @@
                                                                 "string",
                                                                 "null"
                                                             ]
+                                                        },
+                                                        "available": {
+                                                            "type": "boolean",
+                                                            "x-contract-status": "Announced local Laravel source contract; generated artifact and deployment not verified"
+                                                        },
+                                                        "unavailable_reason": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ],
+                                                            "enum": [
+                                                                "api_disabled",
+                                                                "in_app_disabled",
+                                                                "disabled",
+                                                                "unconfigured",
+                                                                null
+                                                            ],
+                                                            "x-contract-status": "Announced local Laravel source contract; generated artifact and deployment not verified"
                                                         }
                                                     },
                                                     "required": [
@@ -4876,11 +5513,11 @@
                     "204": {
                         "description": "No content"
                     },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationException"
-                    },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
                     }
                 }
             }
@@ -4960,11 +5597,11 @@
                             }
                         }
                     },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationException"
-                    },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
                     }
                 }
             }
@@ -5016,11 +5653,11 @@
                             }
                         }
                     },
-                    "404": {
-                        "$ref": "#/components/responses/ModelNotFoundException"
-                    },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
                     }
                 }
             }
@@ -5171,6 +5808,9 @@
                             }
                         }
                     },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
                     "403": {
                         "description": "An error",
                         "content": {
@@ -5236,9 +5876,6 @@
                                 }
                             }
                         }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
                     }
                 }
             }
@@ -5329,9 +5966,6 @@
                             }
                         }
                     },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
-                    },
                     "202": {
                         "description": "",
                         "content": {
@@ -5410,8 +6044,12 @@
                                 }
                             }
                         }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
                     }
-                }
+                },
+                "description": "Existing actions remain supported. Developing suspend and reactivate require users.status; Owners are skipped. Permission, scope and Owner enforcement remain server responsibilities."
             }
         },
         "/v1/users/{user}/delegation": {
@@ -5477,6 +6115,11 @@
                                                 "type": "boolean"
                                             }
                                         }
+                                    },
+                                    "availability_revision": {
+                                        "type": "string",
+                                        "pattern": "^[a-f0-9]{64}$",
+                                        "x-contract-status": "Announced local Laravel source contract; generated artifact and deployment not verified"
                                     }
                                 },
                                 "required": [
@@ -5508,11 +6151,11 @@
                             }
                         }
                     },
-                    "404": {
-                        "$ref": "#/components/responses/ModelNotFoundException"
-                    },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
                     }
                 }
             }
@@ -5615,8 +6258,40 @@
                             }
                         }
                     },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
                     "422": {
                         "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/mobile/roles/create-context": {
+            "get": {
+                "operationId": "mobileApi.roleCreateContext",
+                "tags": [
+                    "MobileApi"
+                ],
+                "summary": "Read existing role presets constrained by actor delegation ceilings",
+                "responses": {
+                    "200": {
+                        "description": "Source checkpoint; database integration not verified",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/RoleCreateContext"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
                     },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"
@@ -5738,6 +6413,769 @@
                     "updated_at"
                 ],
                 "title": "Role"
+            },
+            "PasswordLinkUserCreate": {
+                "oneOf": [
+                    {
+                        "type": "object",
+                        "properties": {
+                            "first_name": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 100
+                            },
+                            "last_name": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 100
+                            },
+                            "email": {
+                                "type": "string",
+                                "format": "email",
+                                "maxLength": 254,
+                                "description": "RFC-valid address, normalized lowercase; uniqueness is enforced by the server."
+                            },
+                            "phone": {
+                                "type": "string",
+                                "pattern": "^\\+[1-9][0-9]{6,14}$"
+                            },
+                            "role_ids": {
+                                "type": "array",
+                                "maxItems": 20,
+                                "uniqueItems": true,
+                                "items": {
+                                    "type": "integer",
+                                    "minimum": 1
+                                },
+                                "description": "Existing web-role IDs; omission defaults to an empty assignment on the server."
+                            },
+                            "lifecycle_status": {
+                                "type": "string",
+                                "enum": [
+                                    "active",
+                                    "pending"
+                                ]
+                            },
+                            "status": {
+                                "type": "string",
+                                "enum": [
+                                    "enabled",
+                                    "disabled"
+                                ]
+                            },
+                            "provisioning": {
+                                "type": "string",
+                                "const": "password_link"
+                            },
+                            "password": false
+                        },
+                        "required": [
+                            "first_name",
+                            "last_name",
+                            "email",
+                            "phone",
+                            "provisioning",
+                            "lifecycle_status"
+                        ],
+                        "additionalProperties": false
+                    },
+                    {
+                        "type": "object",
+                        "properties": {
+                            "first_name": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 100
+                            },
+                            "last_name": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 100
+                            },
+                            "email": {
+                                "type": "string",
+                                "format": "email",
+                                "maxLength": 254,
+                                "description": "RFC-valid address, normalized lowercase; uniqueness is enforced by the server."
+                            },
+                            "phone": {
+                                "type": "string",
+                                "pattern": "^\\+[1-9][0-9]{6,14}$"
+                            },
+                            "role_ids": {
+                                "type": "array",
+                                "maxItems": 20,
+                                "uniqueItems": true,
+                                "items": {
+                                    "type": "integer",
+                                    "minimum": 1
+                                },
+                                "description": "Existing web-role IDs; omission defaults to an empty assignment on the server."
+                            },
+                            "lifecycle_status": false,
+                            "status": {
+                                "type": "string",
+                                "enum": [
+                                    "enabled",
+                                    "disabled"
+                                ]
+                            },
+                            "provisioning": {
+                                "type": "string",
+                                "const": "password_link"
+                            },
+                            "password": false
+                        },
+                        "required": [
+                            "first_name",
+                            "last_name",
+                            "email",
+                            "phone",
+                            "provisioning",
+                            "status"
+                        ],
+                        "additionalProperties": false
+                    }
+                ],
+                "description": "Password setup does not activate pending accounts; an administrator must activate them. Provisioning depends on email/recovery features and may fail with validation 422.",
+                "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
+            },
+            "UserLifecycleAction": {
+                "type": "string",
+                "enum": [
+                    "suspend",
+                    "reactivate"
+                ],
+                "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
+            },
+            "RolePreset": {
+                "type": "string",
+                "enum": [
+                    "viewer",
+                    "editor",
+                    "manager"
+                ],
+                "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
+            },
+            "LifecycleActionResult": {
+                "type": "object",
+                "properties": {
+                    "message": {
+                        "type": "string",
+                        "enum": [
+                            "Account suspended. Active sessions and API keys were revoked.",
+                            "Account activated. Sign in with the current password.",
+                            "Account activated. Complete password setup before signing in."
+                        ]
+                    }
+                },
+                "required": [
+                    "message"
+                ],
+                "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
+            },
+            "OwnerLifecycleRejection": {
+                "type": "object",
+                "properties": {
+                    "message": {
+                        "type": "string",
+                        "const": "Governance owners cannot be suspended or reactivated through this action."
+                    }
+                },
+                "required": [
+                    "message"
+                ],
+                "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
+            },
+            "RoleScope": {
+                "type": "string",
+                "enum": [
+                    "all",
+                    "self",
+                    "created",
+                    "assigned"
+                ],
+                "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
+            },
+            "RoleCreateContext": {
+                "type": "object",
+                "properties": {
+                    "presets": {
+                        "type": "object",
+                        "properties": {
+                            "viewer": {
+                                "type": "object",
+                                "properties": {
+                                    "label": {
+                                        "type": "string"
+                                    },
+                                    "grants": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "scopes": {
+                                        "type": "object",
+                                        "additionalProperties": {
+                                            "$ref": "#/components/schemas/RoleScope"
+                                        }
+                                    },
+                                    "fields": {
+                                        "type": "object",
+                                        "additionalProperties": {
+                                            "type": "object",
+                                            "properties": {
+                                                "view": {
+                                                    "type": "boolean"
+                                                },
+                                                "edit": {
+                                                    "type": "boolean"
+                                                }
+                                            },
+                                            "required": [
+                                                "view",
+                                                "edit"
+                                            ]
+                                        }
+                                    },
+                                    "available": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "required": [
+                                    "label",
+                                    "grants",
+                                    "scopes",
+                                    "fields",
+                                    "available"
+                                ]
+                            },
+                            "editor": {
+                                "type": "object",
+                                "properties": {
+                                    "label": {
+                                        "type": "string"
+                                    },
+                                    "grants": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "scopes": {
+                                        "type": "object",
+                                        "additionalProperties": {
+                                            "$ref": "#/components/schemas/RoleScope"
+                                        }
+                                    },
+                                    "fields": {
+                                        "type": "object",
+                                        "additionalProperties": {
+                                            "type": "object",
+                                            "properties": {
+                                                "view": {
+                                                    "type": "boolean"
+                                                },
+                                                "edit": {
+                                                    "type": "boolean"
+                                                }
+                                            },
+                                            "required": [
+                                                "view",
+                                                "edit"
+                                            ]
+                                        }
+                                    },
+                                    "available": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "required": [
+                                    "label",
+                                    "grants",
+                                    "scopes",
+                                    "fields",
+                                    "available"
+                                ]
+                            },
+                            "manager": {
+                                "type": "object",
+                                "properties": {
+                                    "label": {
+                                        "type": "string"
+                                    },
+                                    "grants": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "scopes": {
+                                        "type": "object",
+                                        "additionalProperties": {
+                                            "$ref": "#/components/schemas/RoleScope"
+                                        }
+                                    },
+                                    "fields": {
+                                        "type": "object",
+                                        "additionalProperties": {
+                                            "type": "object",
+                                            "properties": {
+                                                "view": {
+                                                    "type": "boolean"
+                                                },
+                                                "edit": {
+                                                    "type": "boolean"
+                                                }
+                                            },
+                                            "required": [
+                                                "view",
+                                                "edit"
+                                            ]
+                                        }
+                                    },
+                                    "available": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "required": [
+                                    "label",
+                                    "grants",
+                                    "scopes",
+                                    "fields",
+                                    "available"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "viewer",
+                            "editor",
+                            "manager"
+                        ]
+                    },
+                    "catalog": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string"
+                        }
+                    },
+                    "scope_options": {
+                        "type": "object",
+                        "properties": {
+                            "all": {
+                                "type": "string"
+                            },
+                            "self": {
+                                "type": "string"
+                            },
+                            "created": {
+                                "type": "string"
+                            },
+                            "assigned": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "all",
+                            "self",
+                            "created",
+                            "assigned"
+                        ]
+                    },
+                    "capability_availability": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "boolean"
+                        },
+                        "x-contract-status": "Announced local Laravel source contract; generated artifact and deployment not verified"
+                    },
+                    "availability_revision": {
+                        "type": "string",
+                        "pattern": "^[a-f0-9]{64}$",
+                        "x-contract-status": "Announced local Laravel source contract; generated artifact and deployment not verified"
+                    },
+                    "field_catalog": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string"
+                        },
+                        "x-contract-status": "Announced local Laravel source contract; generated artifact and deployment not verified"
+                    },
+                    "field_delegatable": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "object",
+                            "properties": {
+                                "view": {
+                                    "type": "boolean"
+                                },
+                                "edit": {
+                                    "type": "boolean"
+                                }
+                            },
+                            "required": [
+                                "view",
+                                "edit"
+                            ]
+                        },
+                        "x-contract-status": "Announced local Laravel source contract; generated artifact and deployment not verified"
+                    },
+                    "delegatable": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/components/schemas/RoleScope"
+                            }
+                        },
+                        "x-contract-status": "Announced local Laravel source contract; generated artifact and deployment not verified"
+                    }
+                },
+                "required": [
+                    "presets",
+                    "catalog",
+                    "scope_options"
+                ],
+                "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
+            },
+            "AuditEvent": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "minimum": 1
+                    },
+                    "public_id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "action": {
+                        "type": "string"
+                    },
+                    "outcome": {
+                        "type": "string"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "UTC ISO timestamp"
+                    },
+                    "actor": {
+                        "type": "object",
+                        "properties": {
+                            "public_id": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "name": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "public_id",
+                            "name"
+                        ]
+                    },
+                    "changes": {
+                        "anyOf": [
+                            {
+                                "type": "object",
+                                "additionalProperties": {}
+                            },
+                            {
+                                "type": "array",
+                                "maxItems": 0
+                            }
+                        ]
+                    },
+                    "request_id": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "subject_id": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "subject_type": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Stored morph-class string; filter aliases are separate."
+                    },
+                    "category": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "enum": [
+                            "users",
+                            "security",
+                            "reports",
+                            null
+                        ]
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "field_changes": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/AuditFieldChange"
+                        }
+                    },
+                    "related": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "resource": {
+                                    "type": "string",
+                                    "enum": [
+                                        "users",
+                                        "roles"
+                                    ]
+                                },
+                                "id": {
+                                    "type": "integer",
+                                    "minimum": 1
+                                },
+                                "path": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "resource",
+                                "id",
+                                "path"
+                            ]
+                        }
+                    }
+                },
+                "required": [
+                    "id",
+                    "public_id",
+                    "action",
+                    "outcome",
+                    "created_at",
+                    "actor"
+                ],
+                "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
+            },
+            "JsonValue": {
+                "anyOf": [
+                    {
+                        "type": "null"
+                    },
+                    {
+                        "type": "boolean"
+                    },
+                    {
+                        "type": "number"
+                    },
+                    {
+                        "type": "string"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/JsonValue"
+                        }
+                    },
+                    {
+                        "type": "object",
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/JsonValue"
+                        }
+                    }
+                ],
+                "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
+            },
+            "AuditFieldChange": {
+                "type": "object",
+                "properties": {
+                    "field": {
+                        "type": "string"
+                    },
+                    "label": {
+                        "type": "string"
+                    },
+                    "before": {
+                        "$ref": "#/components/schemas/JsonValue"
+                    },
+                    "after": {
+                        "$ref": "#/components/schemas/JsonValue"
+                    }
+                },
+                "required": [
+                    "field",
+                    "label",
+                    "before",
+                    "after"
+                ],
+                "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
+            },
+            "RoleWrite": {
+                "oneOf": [
+                    {
+                        "type": "object",
+                        "properties": {
+                            "name": {
+                                "type": "string"
+                            },
+                            "description": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "maxLength": 500,
+                                "description": "Omission preserves the existing value."
+                            },
+                            "default_scope": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "enum": [
+                                    "all",
+                                    "self",
+                                    "created",
+                                    "assigned",
+                                    null
+                                ],
+                                "description": "Null means no scope override; non-null scope fills grants without explicit scopes."
+                            },
+                            "grants": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                }
+                            },
+                            "scopes": {
+                                "type": "object",
+                                "additionalProperties": {
+                                    "$ref": "#/components/schemas/RoleScope"
+                                }
+                            },
+                            "fields": {
+                                "type": "object",
+                                "additionalProperties": {
+                                    "type": "object",
+                                    "properties": {
+                                        "view": {
+                                            "type": "boolean"
+                                        },
+                                        "edit": {
+                                            "type": "boolean"
+                                        }
+                                    },
+                                    "required": [
+                                        "view",
+                                        "edit"
+                                    ]
+                                }
+                            },
+                            "preset": {
+                                "$ref": "#/components/schemas/RolePreset"
+                            },
+                            "availability_revision": {
+                                "type": "string",
+                                "pattern": "^[a-f0-9]{64}$",
+                                "x-contract-status": "Announced local Laravel source contract; generated artifact and deployment not verified"
+                            }
+                        },
+                        "required": [
+                            "name",
+                            "preset"
+                        ],
+                        "additionalProperties": false
+                    },
+                    {
+                        "type": "object",
+                        "properties": {
+                            "name": {
+                                "type": "string"
+                            },
+                            "description": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "maxLength": 500,
+                                "description": "Omission preserves the existing value."
+                            },
+                            "default_scope": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "enum": [
+                                    "all",
+                                    "self",
+                                    "created",
+                                    "assigned",
+                                    null
+                                ],
+                                "description": "Null means no scope override; non-null scope fills grants without explicit scopes."
+                            },
+                            "grants": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                }
+                            },
+                            "scopes": {
+                                "type": "object",
+                                "additionalProperties": {
+                                    "$ref": "#/components/schemas/RoleScope"
+                                }
+                            },
+                            "fields": {
+                                "type": "object",
+                                "additionalProperties": {
+                                    "type": "object",
+                                    "properties": {
+                                        "view": {
+                                            "type": "boolean"
+                                        },
+                                        "edit": {
+                                            "type": "boolean"
+                                        }
+                                    },
+                                    "required": [
+                                        "view",
+                                        "edit"
+                                    ]
+                                }
+                            },
+                            "preset": false,
+                            "availability_revision": {
+                                "type": "string",
+                                "pattern": "^[a-f0-9]{64}$",
+                                "x-contract-status": "Announced local Laravel source contract; generated artifact and deployment not verified"
+                            }
+                        },
+                        "required": [
+                            "name",
+                            "grants",
+                            "scopes",
+                            "fields"
+                        ],
+                        "additionalProperties": false
+                    }
+                ],
+                "description": "With preset, omitted collections use server preset defaults and explicit collections override them. Without preset all three collections are required; delegation validation remains server authoritative.",
+                "x-contract-status": "source checkpoint; generated Laravel artifact and database integration not yet verified"
             }
         },
         "responses": {

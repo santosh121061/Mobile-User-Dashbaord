@@ -3,7 +3,7 @@ import { useSession } from "@/auth/session";
 import type { PrivateWork } from "@/auth/private-work";
 
 /** Bind feature callbacks, picker results and messages to the shared session fence. */
-export function useFeatureWork() {
+export function useFeatureWork(contextRevision?: string) {
   const session = useSession();
   const active = useRef<PrivateWork | null>(null);
   const detach = useRef(() => {});
@@ -15,6 +15,8 @@ export function useFeatureWork() {
     session.bootstrap?.account.id,
     session.bootstrap?.access_revision,
     session.bootstrap?.configuration_revision,
+    session.bootstrap?.availability_revision,
+    contextRevision,
   ].join(":");
   const [status, setStatus] = useState<{
     identity: string;
@@ -54,6 +56,10 @@ export function useFeatureWork() {
       await action(scope);
     } catch (failure) {
       if (active.current === scope && scope.isCurrent()) {
+        if (failure instanceof Error && failure.name === "AbortError") {
+          setStatus({ identity, busy: false, error: null });
+          return;
+        }
         setStatus({ identity, busy: false, error: failure });
         failed?.(failure);
       }

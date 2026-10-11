@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { api, ApiError, check } from "@/api/client";
 import { useBootstrap } from "@/auth/session";
-import { useFeatureConfirmation } from "@/features/use-feature-confirmation";
+import { useFeatureAction } from "@/features/use-feature-action";
 import { useDiscard } from "@/components/forms";
 import { Button, ErrorState, Label } from "@/components/ui";
 import { t } from "@/localization";
@@ -19,7 +19,7 @@ export function AdminAvatar({
   refresh: () => Promise<unknown>;
 }) {
   const snapshot = useBootstrap();
-  const confirm = useFeatureConfirmation();
+  const runAction = useFeatureAction();
   const work = useFeatureWork();
   const [avatar, setAvatar] = useState<AvatarAsset | null>(null);
   const [message, setMessage] = useState("");
@@ -41,7 +41,7 @@ export function AdminAvatar({
             void work.run(async (scope) => {
               const data = new FormData();
               appendAvatar(data, avatar);
-              await confirm(
+              await runAction(
                 scope,
                 "POST",
                 `/api/v1/users/${id}/avatar`,
@@ -74,7 +74,7 @@ export function AdminAvatar({
             void work.run(async (scope) => {
               const data = new FormData();
               data.append("remove_avatar", "1");
-              await confirm(
+              await runAction(
                 scope,
                 "POST",
                 `/api/v1/users/${id}/avatar`,
@@ -89,6 +89,7 @@ export function AdminAvatar({
                       signal,
                     }),
                   ),
+                true,
               );
               scope.assertCurrent();
               setMessage(t("saved"));

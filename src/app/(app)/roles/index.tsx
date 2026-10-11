@@ -19,7 +19,7 @@ import { Access } from "@/components/access";
 import { Button, Card, Input, Label, Screen } from "@/components/ui";
 import { Records } from "@/components/records";
 import { ExportButton } from "@/features/exports";
-import { t } from "@/localization";
+import { t, number } from "@/localization";
 export default function Roles() {
   useTitle(t("roles"));
   const { colors } = useTheme();
@@ -68,6 +68,7 @@ export default function Roles() {
               !debounced ||
               [
                 role.name,
+                role.description ?? "",
                 ...(role.permissions?.map((permission) => permission.name) ??
                   []),
               ].some((value) =>
@@ -109,6 +110,20 @@ export default function Roles() {
                   </View>
                   <View style={{ flex: 1, gap: 4 }}>
                     <Label size="bodyMedium">{role.name}</Label>
+                    {role.description !== undefined &&
+                      role.description !== null && (
+                        <Label size="secondary" tone="secondary">
+                          {role.description}
+                        </Label>
+                      )}
+                    {role.assigned_count_scope ===
+                      "visible_unarchived_accounts" &&
+                      role.assigned_count !== undefined &&
+                      role.assigned_count !== null && (
+                        <Label size="secondary" tone="secondary">
+                          {number(role.assigned_count)} visible accounts
+                        </Label>
+                      )}
                     {role.permissions && (
                       <Label size="secondary" tone="secondary">
                         {role.permissions.length}{" "}

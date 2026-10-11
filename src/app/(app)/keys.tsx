@@ -1,15 +1,18 @@
 import { Sheet } from "@/components/sheet";
 import { useTitle } from "@/components/forms";
-import { KeyRound, Plus, LockKeyhole } from "lucide-react-native";
+import { KeyRound, Plus, LockKeyhole, Ellipsis } from "lucide-react-native";
 import { FormIntro } from "@/components/form-intro";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import * as Clipboard from "expo-clipboard";
+import { KeyRow } from "@/components/details";
 import { View } from "react-native";
 import { z } from "zod";
-import { api, check, unwrap } from "@/api/client";
+import { api, ApiError, check, unwrap } from "@/api/client";
 import { useRead } from "@/api/hooks";
 import { envelope, idSchema } from "@/api/runtime";
-import { useBootstrap } from "@/auth/session";
-import { useConfirmation } from "@/auth/confirmation";
+import { useBootstrap, useSession } from "@/auth/session";
+import { useFeatureAction } from "@/features/use-feature-action";
+import { useFeatureWork } from "@/features/use-feature-work";
 import { Access } from "@/components/access";
 import {
   Button,
@@ -32,10 +35,33 @@ const keySchema = z.object({
   last_used_at: z.string().nullable(),
 });
 export default function Keys() {
+  const snapshot = useBootstrap();
+  const { phase } = useSession();
+  if (!snapshot.features["api.enabled"])
+    return (
+      <Screen>
+        <ErrorState error={new ApiError(403, {}, null)} />
+      </Screen>
+    );
+  return (
+    <KeyManager
+      key={[
+        snapshot.account.id,
+        snapshot.access_revision,
+        snapshot.configuration_revision,
+        snapshot.availability_revision,
+        ["ready", "checking"].includes(phase) ? "active" : phase,
+      ].join(":")}
+    />
+  );
+}
+function KeyManager() {
   const { colors } = useTheme();
   useTitle(t("keys"));
   const snapshot = useBootstrap();
-  const confirm = useConfirmation();
+  const runAction = useFeatureAction();
+  const work = useFeatureWork();
+  const { error, busy } = work;
   const query = useRead(
     "keys",
     null,
@@ -51,45 +77,76 @@ export default function Keys() {
   const [days, setDays] = useState("30");
   const [abilities, setAbilities] = useState<string[]>(["account.read"]);
   const [secret, setSecret] = useState<string | null>(null);
-  const [error, setError] = useState<unknown>(null);
-  const [busy, setBusy] = useState(false);
+  const secretRef = useRef<string | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [selected, setSelected] = useState<string | null>(null);
+  useEffect(
+    () => () => {
+      secretRef.current = null;
+    },
+    [],
+  );
+  const closeCreation = () => {
+    secretRef.current = null;
+    setSecret(null);
+    setCopied(false);
+    setCreating(false);
+  };
   const choices = [
-    "account.read",
-    "account.update",
-    "account.password",
-    ...(snapshot.modules.notifications
-      ? ["notifications.read", "notifications.update"]
-      : []),
-    ...Object.keys(snapshot.actions).filter((key) => snapshot.actions[key]),
+    ...new Set([
+      "account.read",
+      "account.update",
+      "account.password",
+      ...(snapshot.modules.notifications
+        ? ["notifications.read", "notifications.update"]
+        : []),
+      ...Object.keys(snapshot.actions).filter((key) => snapshot.actions[key]),
+    ]),
   ];
-  const create = async () => {
-    setBusy(true);
-    setError(null);
-    try {
-      const issued = await confirm("POST", "/api/v1/keys", async (signal) =>
-        unwrap(
-          await api.POST("/v1/keys", {
-            body: { name, days: Number(days), abilities },
+  const create = () =>
+    work.run(async (scope) => {
+      const issued = await runAction(
+        scope,
+        "POST",
+        "/api/v1/keys",
+        async (signal) =>
+          unwrap(
+            await api.POST("/v1/keys", {
+              body: {
+                name: name.trim(),
+                days: Number(days),
+                abilities: abilities.filter((value) => choices.includes(value)),
+              },
 
-            signal,
-          }),
-          z.object({ access_token: z.string() }),
-        ),
+              signal,
+            }),
+            z.object({ access_token: z.string().min(1) }),
+          ),
       );
+      scope.assertCurrent();
+      secretRef.current = issued.access_token;
       setSecret(issued.access_token);
+      setCopied(false);
       setName("");
       await query.refetch();
-    } catch (failure) {
-      setError(failure);
-    } finally {
-      setBusy(false);
-    }
-  };
-  const revoke = async (id: string) => {
-    setBusy(true);
-    setError(null);
-    try {
-      await confirm("DELETE", `/api/v1/keys/${id}`, async (signal) =>
+      scope.assertCurrent();
+    });
+  const copy = () =>
+    work.run(async (scope) => {
+      scope.assertCurrent();
+      const value = secretRef.current;
+      if (!value) throw new Error("This secret is no longer available.");
+      const saved = await Clipboard.setStringAsync(value);
+      scope.assertCurrent();
+      if (!saved)
+        throw new Error(
+          "Clipboard unavailable. You can select and copy the key.",
+        );
+      setCopied(true);
+    });
+  const revoke = (id: string) =>
+    work.run(async (scope) => {
+      await runAction(scope, "DELETE", `/api/v1/keys/${id}`, async (signal) =>
         check(
           await api.DELETE("/v1/keys/{id}", {
             params: { path: { id } },
@@ -98,13 +155,12 @@ export default function Keys() {
           }),
         ),
       );
+      scope.assertCurrent();
       await query.refetch();
-    } catch (failure) {
-      setError(failure);
-    } finally {
-      setBusy(false);
-    }
-  };
+      scope.assertCurrent();
+      setSelected(null);
+    });
+  const selectedKey = query.data?.find((key) => key.id === selected);
   return (
     <Access module="keys">
       <Screen scroll>
@@ -124,11 +180,9 @@ export default function Keys() {
         {creating && (
           <Sheet
             title={t("createKey")}
+            closeDisabled={busy}
             close={() => {
-              if (!busy) {
-                setCreating(false);
-                setSecret(null);
-              }
+              if (!busy) closeCreation();
             }}
           >
             {secret ? (
@@ -136,11 +190,18 @@ export default function Keys() {
                 <Label>{t("keySecret")}</Label>
                 <Label selectable>{secret}</Label>
                 <Button
+                  label="Copy key"
+                  variant="secondary"
+                  disabled={busy}
+                  onPress={() => void copy()}
+                />
+                {copied && (
+                  <Label accessibilityLiveRegion="polite">Key copied</Label>
+                )}
+                <Button
                   label={t("close")}
-                  onPress={() => {
-                    setSecret(null);
-                    setCreating(false);
-                  }}
+                  disabled={busy}
+                  onPress={closeCreation}
                 />
               </Card>
             ) : (
@@ -151,12 +212,24 @@ export default function Keys() {
                   value={name}
                   onChangeText={setName}
                   maxLength={80}
+                  editable={!busy}
+                  error={
+                    error instanceof ApiError
+                      ? error.fields.name?.[0]
+                      : undefined
+                  }
                 />
                 <Input
                   label={t("days")}
                   value={days}
                   onChangeText={setDays}
                   keyboardType="number-pad"
+                  editable={!busy}
+                  error={
+                    error instanceof ApiError
+                      ? error.fields.days?.[0]
+                      : undefined
+                  }
                 />
                 <View>
                   {choices.map((key) => (
@@ -164,6 +237,7 @@ export default function Keys() {
                       key={key}
                       label={key}
                       selected={abilities.includes(key)}
+                      disabled={busy}
                       onPress={() =>
                         setAbilities((old) =>
                           old.includes(key)
@@ -179,7 +253,7 @@ export default function Keys() {
                   loading={busy}
                   disabled={
                     !name.trim() ||
-                    !abilities.length ||
+                    !abilities.some((value) => choices.includes(value)) ||
                     !Number.isInteger(Number(days)) ||
                     Number(days) < 1 ||
                     Number(days) > 365
@@ -192,10 +266,7 @@ export default function Keys() {
               label={t("cancel")}
               variant="secondary"
               disabled={busy}
-              onPress={() => {
-                setCreating(false);
-                setSecret(null);
-              }}
+              onPress={closeCreation}
             />
             {!!error && <ErrorState error={error} />}
           </Sheet>
@@ -211,16 +282,31 @@ export default function Keys() {
               key={key.id}
               title={key.name}
               subtitle={`${key.abilities.join(", ")} · ${date(key.expires_at)}`}
-              trailing={
-                <Button
-                  label={t("revoke")}
-                  variant="danger"
-                  disabled={busy}
-                  onPress={() => void revoke(key.id)}
-                />
-              }
+              onPress={() => {
+                if (!busy) setSelected(key.id);
+              }}
+              trailing={<Ellipsis size={20} color={colors.text.secondary} />}
             />
           ))
+        )}
+        {selectedKey && (
+          <Sheet
+            title={selectedKey.name}
+            closeDisabled={busy}
+            close={() => setSelected(null)}
+          >
+            <KeyRow label="Scope" value={selectedKey.abilities.join(", ")} />
+            <KeyRow label="Last used" value={date(selectedKey.last_used_at)} />
+            <KeyRow label="Expires" value={date(selectedKey.expires_at)} />
+            <KeyRow label="Secret" value="Not available after creation" />
+            <Button
+              label={t("revoke")}
+              variant="danger"
+              disabled={busy}
+              onPress={() => void revoke(selectedKey.id)}
+            />
+            {!!error && <ErrorState error={error} />}
+          </Sheet>
         )}
         {!query.isPending && !query.error && query.data?.length === 0 && (
           <Label tone="secondary" size="secondary">

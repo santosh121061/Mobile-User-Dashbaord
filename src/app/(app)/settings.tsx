@@ -10,7 +10,7 @@ import { api, check, unwrap } from "@/api/client";
 import { useRead } from "@/api/hooks";
 import { envelope } from "@/api/runtime";
 import { useBootstrap, useSession } from "@/auth/session";
-import { useConfirmation } from "@/auth/confirmation";
+import { useAuthenticatedAction } from "@/auth/authenticated-actions";
 import { useDiscard, useTitle } from "@/components/forms";
 import { Access } from "@/components/access";
 import {
@@ -69,7 +69,7 @@ function SettingsEditor({
 }) {
   const snapshot = useBootstrap();
   const session = useSession();
-  const confirm = useConfirmation();
+  const runAction = useAuthenticatedAction();
   const [values, setValues] = useState(initial.values);
   const [dirty, setDirty] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -85,7 +85,7 @@ function SettingsEditor({
     setBusy(true);
     setError(null);
     try {
-      await confirm("PATCH", "/api/v1/settings", async (signal) =>
+      await runAction("PATCH", "/api/v1/settings", async (signal) =>
         check(
           await api.PATCH("/v1/settings", {
             body: { values, version: initial.version },
@@ -166,7 +166,7 @@ function SettingsEditor({
           .filter((group) => group.keys.length)
           .map((group) => (
             <View key={group.label} style={{ gap: 10, marginTop: 3 }}>
-              <Label size="title" accessibilityRole="header">
+              <Label size="section" accessibilityRole="header">
                 {group.label}
               </Label>
               <Card style={{ gap: 0, paddingVertical: 3 }}>
