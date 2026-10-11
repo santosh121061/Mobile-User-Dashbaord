@@ -1,13 +1,13 @@
 import { router } from "expo-router";
 import { Pressable, View, useWindowDimensions } from "react-native";
-import { z } from "zod";
 import { useBootstrap, useSession } from "@/auth/session";
 import { api, unwrap } from "@/api/client";
 import { useRead } from "@/api/hooks";
-import { auditSchema, envelope, dictionary } from "@/api/runtime";
+import { envelope } from "@/api/runtime";
+import { dashboardSchema } from "@/api/contracts";
 import { Button, Card, ErrorState, Label, Screen, Chip } from "@/components/ui";
 import { useState } from "react";
-import { t, number } from "@/localization";
+import { t, number, type StringKey } from "@/localization";
 import { Sheet } from "@/components/sheet";
 import { useTheme } from "@/theme";
 import { queryClient, queryKey } from "@/api/query";
@@ -37,15 +37,7 @@ import {
   permittedExportResources,
   searchableResources,
 } from "@/modules/registry";
-export const summarySchema = z.object({
-  metrics: dictionary(z.number()),
-  new_users: z.array(
-    z.object({ date: z.string(), label: z.string(), count: z.number() }),
-  ),
-  recent: z.array(auditSchema),
-  timezone: z.string(),
-  period: z.number(),
-});
+export const summarySchema = dashboardSchema;
 export default function Home() {
   const snapshot = useBootstrap();
   return (
@@ -152,10 +144,11 @@ function HomeScreen() {
     );
   const columns = fontScale >= 1.5 ? 1 : 2;
   const availableWidth =
-    Math.min(width - (width >= 600 ? 88 : 0), 760) - (width < 600 ? 32 : 48);
+    Math.min(width - (width >= 600 ? 88 : 0), 680) -
+    (width < 370 ? 24 : width < 600 ? 32 : 48);
   const cardWidth = (availableWidth - (columns - 1) * 8) / columns;
   const cardGap = 8;
-  const metrics = (
+  const legacyMetrics = (
     [
       ["Total accounts", "totalAccounts"],
       ["Enabled", "enabled"],
@@ -170,6 +163,24 @@ function HomeScreen() {
           snapshot.fields.status?.view) &&
         (key !== "Verified email" || snapshot.fields.email?.view),
   );
+  const dailyMetrics = query.data?.daily_metrics;
+  const dailyEntries: (readonly [string, StringKey, number | null])[] =
+    dailyMetrics === undefined
+      ? []
+      : [
+          ["Total users", "totalUsers", dailyMetrics.total_users],
+          ["Active today", "activeToday", dailyMetrics.active_today],
+          ["Events today", "eventsToday", dailyMetrics.events_today],
+          ["Roles", "roles", dailyMetrics.roles],
+        ];
+  const metrics: (readonly [string, StringKey, number | null | undefined])[] =
+    dailyMetrics !== undefined
+      ? dailyEntries.filter(([, , value]) => value !== null)
+      : legacyMetrics.map(
+          ([key, label]) => [key, label, query.data?.metrics[key]] as const,
+        );
+  const activitySeries = query.data?.activity_series;
+  const days = activitySeries ?? query.data?.new_users ?? [];
   return (
     <Screen
       scroll
@@ -224,7 +235,7 @@ function HomeScreen() {
                 gap: cardGap,
               }}
             >
-              {metrics.map(([key, label]) => (
+              {metrics.map(([key, label, value]) => (
                 <Card
                   key={key}
                   style={{
@@ -242,24 +253,32 @@ function HomeScreen() {
                       width: 32,
                       height: 32,
                       borderRadius: 16,
-                      backgroundColor:
-                        key === "Total accounts"
-                          ? colors.brand.primarySoft
-                          : key === "Enabled"
-                            ? colors.status.successSoft
-                            : key === "Disabled"
-                              ? colors.status.warningSoft
+                      backgroundColor: [
+                        "Total accounts",
+                        "Total users",
+                      ].includes(key)
+                        ? colors.brand.primarySoft
+                        : ["Enabled", "Active today"].includes(key)
+                          ? colors.status.successSoft
+                          : key === "Disabled"
+                            ? colors.status.warningSoft
+                            : key === "Roles"
+                              ? colors.accent.goldSoft
                               : colors.accent.purpleSoft,
                       alignItems: "center",
                       justifyContent: "center",
                     }}
                   >
-                    {key === "Total accounts" ? (
+                    {["Total accounts", "Total users"].includes(key) ? (
                       <Users size={19} color={colors.brand.primary} />
-                    ) : key === "Enabled" ? (
+                    ) : ["Enabled", "Active today"].includes(key) ? (
                       <UserCheck size={19} color={colors.status.successText} />
                     ) : key === "Disabled" ? (
                       <UserX size={19} color={colors.status.warningText} />
+                    ) : key === "Events today" ? (
+                      <Activity size={19} color={colors.accent.purple} />
+                    ) : key === "Roles" ? (
+                      <ShieldCheck size={19} color={colors.accent.gold} />
                     ) : (
                       <BadgeCheck size={19} color={colors.accent.purple} />
                     )}
@@ -268,9 +287,7 @@ function HomeScreen() {
                     <Label tone="secondary" size="secondary">
                       {t(label)}
                     </Label>
-                    <Label size="metric">
-                      {number(query.data!.metrics[key]!)}
-                    </Label>
+                    <Label size="metric">{number(value!)}</Label>
                   </View>
                 </Card>
               ))}
@@ -297,7 +314,11 @@ function HomeScreen() {
                 >
                   <Activity size={22} color={colors.brand.primary} />
                   <Label size="title" style={{ letterSpacing: -0.25 }}>
-                    {t("newAccounts")}
+                    {t(
+                      activitySeries !== undefined
+                        ? "workspaceActivity"
+                        : "newAccounts",
+                    )}
                   </Label>
                 </View>
                 <Pressable
@@ -322,7 +343,7 @@ function HomeScreen() {
                 )}
                 onPress={() => setShowDays((value) => !value)}
               >
-                <AccountTrend days={query.data.new_users} />
+                <AccountTrend days={days} />
               </Pressable>
               <View
                 style={{
@@ -333,21 +354,15 @@ function HomeScreen() {
                 }}
               >
                 <Label size="caption" tone="secondary">
-                  {query.data.new_users[0]?.date} –{" "}
-                  {query.data.new_users.at(-1)?.date}
+                  {days[0]?.date} – {days.at(-1)?.date}
                 </Label>
                 <Label size="caption">
-                  {number(
-                    query.data.new_users.reduce(
-                      (total, day) => total + day.count,
-                      0,
-                    ),
-                  )}{" "}
-                  new accounts
+                  {number(days.reduce((total, day) => total + day.count, 0))}{" "}
+                  {activitySeries !== undefined ? "events" : "new accounts"}
                 </Label>
               </View>
               {showDays &&
-                query.data.new_users.map((day) => (
+                days.map((day) => (
                   <View
                     key={day.date}
                     style={{

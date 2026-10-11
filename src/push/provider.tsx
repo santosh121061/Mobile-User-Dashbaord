@@ -12,7 +12,7 @@ import { envelope } from "@/api/runtime";
 import { queryClient, queryKey } from "@/api/query";
 import { useSession } from "@/auth/session";
 import type { PrivateWork } from "@/auth/private-work";
-import { permitsIntent, routeForIntent } from "@/utils/links";
+import { permitsIntent, routeForIntent, unavailableHref } from "@/utils/links";
 import { t } from "@/localization";
 import {
   notificationId,
@@ -55,6 +55,7 @@ export function PushProvider({ children }: React.PropsWithChildren) {
     session.bootstrap?.account.id,
     session.bootstrap?.access_revision,
     session.bootstrap?.configuration_revision,
+    session.bootstrap?.availability_revision,
   ].join(":");
   const [state, setState] = useState<State>({
     owner: "",
@@ -110,6 +111,7 @@ export function PushProvider({ children }: React.PropsWithChildren) {
   const allowed = useCallback(
     (preferences: PushPreferences) =>
       nativePushSupported() &&
+      preferences.provider.available === true &&
       preferences.provider.status === "ready" &&
       !!preferences.provider.project_id &&
       !!current.current.bootstrap?.modules.notifications &&
@@ -300,6 +302,7 @@ export function PushProvider({ children }: React.PropsWithChildren) {
     }
     void (async () => {
       let denied = false;
+      let retryRoute: string | undefined;
       try {
         if (!bootstrap.modules.notifications)
           throw new Error("Unavailable destination");
@@ -322,6 +325,7 @@ export function PushProvider({ children }: React.PropsWithChildren) {
         if (tap.current !== request || result.notification_id !== request.id)
           throw new Error("Unexpected notification");
         const route = routeForIntent(result.path);
+        if (route !== "/unavailable") retryRoute = route;
         if (!permitsIntent(route, current.current.bootstrap!))
           throw new Error("Unavailable destination");
         discardPushIntent(request.id);
@@ -329,7 +333,11 @@ export function PushProvider({ children }: React.PropsWithChildren) {
       } catch {
         if (!denied && scope.isCurrent()) {
           discardPushIntent(request.id);
-          router.push("/unavailable");
+          router.push(
+            retryRoute
+              ? unavailableHref(retryRoute, bootstrap.account.id)
+              : "/unavailable",
+          );
         }
       } finally {
         if (tap.current === request) {

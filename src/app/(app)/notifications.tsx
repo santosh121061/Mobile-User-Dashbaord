@@ -14,7 +14,7 @@ import { Records } from "@/components/records";
 import { ExportButton } from "@/features/exports";
 import { useFeatureWork } from "@/features/use-feature-work";
 import { useUnread } from "@/features/inbox";
-import { routeForIntent } from "@/utils/links";
+import { routeForIntent, permitsIntent, unavailableHref } from "@/utils/links";
 import { date, number, t } from "@/localization";
 import { useTheme } from "@/theme";
 export default function Notifications() {
@@ -60,7 +60,12 @@ export default function Notifications() {
     work.run(async (scope) => {
       await session.refresh();
       scope.assertCurrent();
-      router.push(routeForIntent(path) ?? "/unavailable");
+      const route = routeForIntent(path);
+      router.push(
+        permitsIntent(route, snapshot)
+          ? route
+          : unavailableHref(route, snapshot.account.id),
+      );
     });
   return (
     <Access module="notifications">

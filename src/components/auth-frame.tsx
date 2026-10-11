@@ -6,15 +6,15 @@ import { AuthHeading, BackHeader } from "./chrome";
 import { useTheme } from "@/theme";
 
 export function AuthCard({ children }: React.PropsWithChildren) {
-  const { colors, dark } = useTheme();
+  const { colors } = useTheme();
   return (
     <Card
       style={{
-        paddingVertical: 21,
-        paddingHorizontal: 18,
-        borderRadius: 24,
-        borderColor: dark ? colors.border : "#E6EFF9",
-        boxShadow: "0px 9px 30px rgba(36,80,135,0.027451)",
+        paddingVertical: 18,
+        paddingHorizontal: 16,
+        borderRadius: 18,
+        borderColor: colors.border,
+        boxShadow: "0px 8px 26px rgba(27,68,128,0.08)",
         gap: 18,
         marginTop: 23,
       }}

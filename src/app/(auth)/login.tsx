@@ -113,35 +113,37 @@ export default function Login() {
       contentStyle={{
         maxWidth: authMaxWidth,
         flexGrow: 1,
-        paddingTop: 0,
+        paddingTop: 24,
         gap: 0,
       }}
     >
-      <View
-        style={{
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "space-between",
-          minHeight: 64,
-          alignSelf: "center",
-          width: "100%",
-          maxWidth: "100%",
-        }}
-      >
-        <View style={{ flex: 1, minWidth: 0 }}>
-          <Brand variant="auth" />
-        </View>
-        <IconButton
-          label={t("appearance")}
-          onPress={() => setMode(dark ? "light" : "dark")}
+      {height < 480 && (
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+            minHeight: 64,
+            alignSelf: "center",
+            width: "100%",
+            maxWidth: "100%",
+          }}
         >
-          {dark ? (
-            <Sun size={20} color={colors.text.secondary} />
-          ) : (
-            <Moon size={20} color={colors.text.secondary} />
-          )}
-        </IconButton>
-      </View>
+          <View style={{ flex: 1, minWidth: 0 }}>
+            {height < 480 && <Brand variant="auth" />}
+          </View>
+          <IconButton
+            label={t("appearance")}
+            onPress={() => setMode(dark ? "light" : "dark")}
+          >
+            {dark ? (
+              <Sun size={20} color={colors.text.secondary} />
+            ) : (
+              <Moon size={20} color={colors.text.secondary} />
+            )}
+          </IconButton>
+        </View>
+      )}
       <View
         style={{
           justifyContent: "flex-start",
@@ -149,7 +151,7 @@ export default function Login() {
           width: "100%",
           maxWidth: authMaxWidth,
           gap: 0,
-          paddingTop: width < 600 ? 18 : 16,
+          paddingTop: 0,
           paddingBottom: 32,
         }}
       >
@@ -157,13 +159,13 @@ export default function Login() {
         <AuthHeading title={t("signInTitle")} subtitle={t("signInHint")} />
         <Card
           style={{
-            paddingVertical: 21,
-            paddingHorizontal: 18,
-            borderRadius: 24,
+            paddingVertical: 18,
+            paddingHorizontal: 16,
+            borderRadius: 18,
             gap: 0,
             marginTop: 23,
-            borderColor: dark ? colors.border : "#E6EFF9",
-            boxShadow: "0px 9px 30px rgba(36,80,135,0.027451)",
+            borderColor: colors.border,
+            boxShadow: "0px 8px 26px rgba(27,68,128,0.08)",
           }}
         >
           <Controller

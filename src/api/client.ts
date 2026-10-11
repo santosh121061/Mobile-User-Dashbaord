@@ -101,11 +101,23 @@ export class ApiError extends Error {
 }
 export class ApiTransportError extends Error {
     constructor(
-        public reason: "network" | "timeout" | "cancelled",
+        public reason: "network" | "timeout" | "cancelled" | "tls",
         public cause: unknown,
     ) {
         super("API transport failed");
     }
+}
+function secureTransportFailure(failure: unknown) {
+    let cause = failure;
+    for (let depth = 0; depth < 8 && cause && typeof cause === "object"; depth++) {
+        const details = cause as { message?: unknown; code?: unknown; cause?: unknown };
+        const message = [details.message, details.code]
+            .filter((value): value is string => typeof value === "string").join(" ");
+        if (/certificate|certpath|cert_path|sslhandshake|ssl handshake|tls.*(?:handshake|protocol|alert)|protocol_version|EPROTO|ERR_SSL|SSL_ERROR/i.test(message))
+            return true;
+        cause = details.cause;
+    }
+    return false;
 }
 export const api = createClient<paths>({
     baseUrl: apiUrl,
@@ -120,12 +132,18 @@ export const api = createClient<paths>({
             cancel();
         }, 15000);
         try {
-            return await fetch(new Request(request, { signal: abort.signal }));
-        } catch (failure) {
-            throw new ApiTransportError(
-                timedOut ? "timeout" : request.signal.aborted ? "cancelled" : "network",
-                failure,
-            );
+            // Request construction is app work. Only a dispatched fetch failure
+            // is a transport failure; do not label polyfill errors as connectivity.
+            const sending = new Request(request, { signal: abort.signal });
+            try {
+                return await fetch(sending);
+            } catch (failure) {
+                throw new ApiTransportError(
+                    timedOut ? "timeout" : request.signal.aborted ? "cancelled"
+                        : secureTransportFailure(failure) ? "tls" : "network",
+                    failure,
+                );
+            }
         } finally {
             clearTimeout(timeout);
             request.signal.removeEventListener("abort", cancel);

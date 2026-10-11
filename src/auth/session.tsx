@@ -9,7 +9,6 @@ import React, {
 import { AppState } from "react-native";
 import * as LocalAuthentication from "expo-local-authentication";
 import * as Network from "expo-network";
-import { z } from "zod";
 import {
   api,
   attachSession,
@@ -21,7 +20,7 @@ import { clearNativePush } from "@/push/native";
 import { discardPushIntent } from "@/push/intents";
 import {
   bootstrapSchema,
-  brandingSchema,
+  publicConfigurationSchema,
   envelope,
   sessionSchema,
   type Bootstrap,
@@ -65,6 +64,7 @@ type Context = State & {
   signIn: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   refresh: () => Promise<void>;
+  refreshForRead: () => Promise<Bootstrap>;
   unlock: () => Promise<boolean>;
   setBiometric: (enabled: boolean) => Promise<boolean>;
   captureWork: () => PrivateWork;
@@ -120,7 +120,9 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
       account.account.id === stateRef.current.bootstrap?.account.id &&
       account.access_revision === stateRef.current.bootstrap?.access_revision &&
       account.configuration_revision ===
-        stateRef.current.bootstrap?.configuration_revision;
+        stateRef.current.bootstrap?.configuration_revision &&
+      account.availability_revision ===
+        stateRef.current.bootstrap?.availability_revision;
     if (!current()) throw cancelledWork();
     const work = createPrivateWork(current, () =>
       privateWorks.current.delete(work),
@@ -210,12 +212,7 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
           await api.GET("/v1/mobile/config", {
             signal: abort.signal,
           }),
-          envelope(
-            z.object({
-              features: z.record(z.string(), z.boolean()),
-              branding: brandingSchema.optional(),
-            }),
-          ),
+          envelope(publicConfigurationSchema),
         ).data;
         if (!current()) return;
         update({
@@ -281,6 +278,7 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
           !old ||
           old.account.id !== snapshot.account.id ||
           old.configuration_revision !== snapshot.configuration_revision ||
+          old.availability_revision !== snapshot.availability_revision ||
           old.access_revision !== snapshot.access_revision
         ) {
           queryClient.clear();
@@ -317,6 +315,24 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
       if (refreshAbort.current === abort) refreshAbort.current = null;
     }
   }, [discardUnpersisted, update, wipe]);
+  const refreshForRead = useCallback(async () => {
+    const generation = epoch.current;
+    const bearer = token.current;
+    if (!bearer || !["ready", "unavailable"].includes(phase.current))
+      throw cancelledWork();
+    await refresh();
+    if (
+      !mounted.current ||
+      !foreground.current ||
+      localLock.current ||
+      generation !== epoch.current ||
+      bearer !== token.current ||
+      phase.current !== "ready" ||
+      !stateRef.current.bootstrap
+    )
+      throw cancelledWork();
+    return stateRef.current.bootstrap;
+  }, [refresh]);
   useEffect(() => {
     mounted.current = true;
     const detachDatePreferences = attachDatePreferences(
@@ -561,6 +577,7 @@ export function SessionProvider({ children }: React.PropsWithChildren) {
         signIn,
         logout,
         refresh,
+        refreshForRead,
         unlock,
         setBiometric,
         captureWork,

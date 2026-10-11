@@ -46,6 +46,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** @description Credential setup never implicitly activates pending accounts. Source pure tests cover quoted RFC email spaces and control rejection; actual database reset/eligibility flow remains unverified. */
         post: operations["accountApi.reset"];
         delete?: never;
         options?: never;
@@ -258,7 +259,7 @@ export interface paths {
         /** Search users in the caller's current record and field scope */
         get: operations["adminApi.index"];
         put?: never;
-        /** Create an account with a password. Role/owner grants require their own key abilities */
+        /** Create an account with the existing password contract or developing password-link provisioning */
         post: operations["adminApi.store"];
         delete?: never;
         options?: never;
@@ -274,7 +275,10 @@ export interface paths {
             cookie?: never;
         };
         get: operations["adminApi.show"];
-        /** Update only supplied fields. Current field permissions apply to every changed field */
+        /**
+         * Update only supplied fields. Current field permissions apply to every changed field
+         * @description Legacy disabled round trips preserve pending/suspended stored states. Provisioning is prohibited. Owner pending/suspended changes return errors.status validation 422.
+         */
         put: operations["adminApi.update"];
         post?: never;
         delete?: never;
@@ -309,6 +313,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** @description Suspend/reactivate use users.status, record scope and status-edit authority; no request body. Idempotent: suspend accepts active/suspended, reactivate accepts pending/suspended/active. Actual changes revoke sessions/tokens and increment access revision. Archived targets require restore (422); governance Owners return 422, or authorization may deny earlier with 403. */
         post: operations["adminApi.action"];
         delete?: never;
         options?: never;
@@ -390,6 +395,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** @description Preserves Laravel paginator envelope, actor record scope and field redaction. Relative periods cannot be combined with dates; subject ID requires alias subject type. */
         get: operations["adminApi.audit"];
         put?: never;
         post?: never;
@@ -553,6 +559,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** @description Calendar buckets use actor-local inclusive start and exclusive next midnight converted to UTC. Timezone comes from actor configuration (server fallback Asia/Kolkata); legacy new_users dates keep the selected date format. */
         get: operations["mobileApi.dashboard"];
         put?: never;
         post?: never;
@@ -601,6 +608,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** @description Numeric event ID, same caller scope as list; inaccessible details return 404. IP and raw metadata are excluded. */
         get: operations["mobileApi.auditDetail"];
         put?: never;
         post?: never;
@@ -814,7 +822,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Apply a bounded bulk action using the caller's current scoped query */
+        /**
+         * Apply a bounded bulk action using the caller's current scoped query
+         * @description Existing actions remain supported. Developing suspend and reactivate require users.status; Owners are skipped. Permission, scope and Owner enforcement remain server responsibilities.
+         */
         post: operations["workspaceApi.bulk"];
         delete?: never;
         options?: never;
@@ -856,6 +867,23 @@ export interface paths {
         patch: operations["workspaceApi.saveSettings"];
         trace?: never;
     };
+    "/v1/mobile/roles/create-context": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read existing role presets constrained by actor delegation ceilings */
+        get: operations["mobileApi.roleCreateContext"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -887,6 +915,214 @@ export interface components {
             created_at: string | null;
             /** Format: date-time */
             updated_at: string | null;
+        };
+        /** @description Password setup does not activate pending accounts; an administrator must activate them. Provisioning depends on email/recovery features and may fail with validation 422. */
+        PasswordLinkUserCreate: {
+            first_name: string;
+            last_name: string;
+            /**
+             * Format: email
+             * @description RFC-valid address, normalized lowercase; uniqueness is enforced by the server.
+             */
+            email: string;
+            phone: string;
+            /** @description Existing web-role IDs; omission defaults to an empty assignment on the server. */
+            role_ids?: number[];
+            /** @enum {string} */
+            lifecycle_status: "active" | "pending";
+            /** @enum {string} */
+            status?: "enabled" | "disabled";
+            /** @constant */
+            provisioning: "password_link";
+            password?: never;
+        } | {
+            first_name: string;
+            last_name: string;
+            /**
+             * Format: email
+             * @description RFC-valid address, normalized lowercase; uniqueness is enforced by the server.
+             */
+            email: string;
+            phone: string;
+            /** @description Existing web-role IDs; omission defaults to an empty assignment on the server. */
+            role_ids?: number[];
+            lifecycle_status?: never;
+            /** @enum {string} */
+            status: "enabled" | "disabled";
+            /** @constant */
+            provisioning: "password_link";
+            password?: never;
+        };
+        /** @enum {string} */
+        UserLifecycleAction: "suspend" | "reactivate";
+        /** @enum {string} */
+        RolePreset: "viewer" | "editor" | "manager";
+        LifecycleActionResult: {
+            /** @enum {string} */
+            message: "Account suspended. Active sessions and API keys were revoked." | "Account activated. Sign in with the current password." | "Account activated. Complete password setup before signing in.";
+        };
+        OwnerLifecycleRejection: {
+            /** @constant */
+            message: "Governance owners cannot be suspended or reactivated through this action.";
+        };
+        /** @enum {string} */
+        RoleScope: "all" | "self" | "created" | "assigned";
+        RoleCreateContext: {
+            presets: {
+                viewer: {
+                    label: string;
+                    grants: string[];
+                    scopes: {
+                        [key: string]: components["schemas"]["RoleScope"];
+                    };
+                    fields: {
+                        [key: string]: {
+                            view: boolean;
+                            edit: boolean;
+                        };
+                    };
+                    available: boolean;
+                };
+                editor: {
+                    label: string;
+                    grants: string[];
+                    scopes: {
+                        [key: string]: components["schemas"]["RoleScope"];
+                    };
+                    fields: {
+                        [key: string]: {
+                            view: boolean;
+                            edit: boolean;
+                        };
+                    };
+                    available: boolean;
+                };
+                manager: {
+                    label: string;
+                    grants: string[];
+                    scopes: {
+                        [key: string]: components["schemas"]["RoleScope"];
+                    };
+                    fields: {
+                        [key: string]: {
+                            view: boolean;
+                            edit: boolean;
+                        };
+                    };
+                    available: boolean;
+                };
+            };
+            catalog: {
+                [key: string]: string;
+            };
+            scope_options: {
+                all: string;
+                self: string;
+                created: string;
+                assigned: string;
+            };
+            capability_availability?: {
+                [key: string]: boolean;
+            };
+            availability_revision?: string;
+            field_catalog?: {
+                [key: string]: string;
+            };
+            field_delegatable?: {
+                [key: string]: {
+                    view: boolean;
+                    edit: boolean;
+                };
+            };
+            delegatable?: {
+                [key: string]: components["schemas"]["RoleScope"][];
+            };
+        };
+        AuditEvent: {
+            id: number;
+            /** Format: uuid */
+            public_id: string;
+            action: string;
+            outcome: string;
+            /**
+             * Format: date-time
+             * @description UTC ISO timestamp
+             */
+            created_at: string;
+            actor: {
+                public_id: string | null;
+                name: string | null;
+            };
+            changes?: {
+                [key: string]: unknown;
+            } | unknown[];
+            request_id?: string | null;
+            subject_id?: string | null;
+            /** @description Stored morph-class string; filter aliases are separate. */
+            subject_type?: string | null;
+            /** @enum {string|null} */
+            category?: "users" | "security" | "reports" | null;
+            description?: string;
+            field_changes?: components["schemas"]["AuditFieldChange"][];
+            related?: {
+                /** @enum {string} */
+                resource: "users" | "roles";
+                id: number;
+                path: string;
+            }[];
+        };
+        JsonValue: null | boolean | number | string | components["schemas"]["JsonValue"][] | {
+            [key: string]: components["schemas"]["JsonValue"];
+        };
+        AuditFieldChange: {
+            field: string;
+            label: string;
+            before: components["schemas"]["JsonValue"];
+            after: components["schemas"]["JsonValue"];
+        };
+        /** @description With preset, omitted collections use server preset defaults and explicit collections override them. Without preset all three collections are required; delegation validation remains server authoritative. */
+        RoleWrite: {
+            name: string;
+            /** @description Omission preserves the existing value. */
+            description?: string | null;
+            /**
+             * @description Null means no scope override; non-null scope fills grants without explicit scopes.
+             * @enum {string|null}
+             */
+            default_scope?: "all" | "self" | "created" | "assigned" | null;
+            grants?: string[];
+            scopes?: {
+                [key: string]: components["schemas"]["RoleScope"];
+            };
+            fields?: {
+                [key: string]: {
+                    view: boolean;
+                    edit: boolean;
+                };
+            };
+            preset: components["schemas"]["RolePreset"];
+            availability_revision?: string;
+        } | {
+            name: string;
+            /** @description Omission preserves the existing value. */
+            description?: string | null;
+            /**
+             * @description Null means no scope override; non-null scope fills grants without explicit scopes.
+             * @enum {string|null}
+             */
+            default_scope?: "all" | "self" | "created" | "assigned" | null;
+            grants: string[];
+            scopes: {
+                [key: string]: components["schemas"]["RoleScope"];
+            };
+            fields: {
+                [key: string]: {
+                    view: boolean;
+                    edit: boolean;
+                };
+            };
+            preset?: never;
+            availability_revision?: string;
         };
     };
     responses: {
@@ -1042,8 +1278,11 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @constant */
-                        message: "Password reset. Sign in again.";
+                        /**
+                         * @description Password setup leaves a pending account pending; eligibility and administrator activation remain separate.
+                         * @enum {string}
+                         */
+                        message: "Password reset. Sign in again." | "Password reset. Sign in when your account is enabled and eligible.";
                     };
                 };
             };
@@ -1112,6 +1351,12 @@ export interface operations {
                             appearance?: {
                                 [key: string]: unknown;
                             };
+                            /** @enum {string} */
+                            lifecycle_status?: "active" | "pending" | "suspended" | "disabled" | "archived";
+                            is_owner?: boolean;
+                            last_active_at?: string | null;
+                            /** @description Derived from existing credentials; true means authentication still requires password setup, independently of lifecycle status. */
+                            password_setup_required?: boolean;
                         };
                     };
                 };
@@ -1203,6 +1448,12 @@ export interface operations {
                             appearance?: {
                                 [key: string]: unknown;
                             };
+                            /** @enum {string} */
+                            lifecycle_status?: "active" | "pending" | "suspended" | "disabled" | "archived";
+                            is_owner?: boolean;
+                            last_active_at?: string | null;
+                            /** @description Derived from existing credentials; true means authentication still requires password setup, independently of lifecycle status. */
+                            password_setup_required?: boolean;
                         };
                     };
                 };
@@ -1483,6 +1734,12 @@ export interface operations {
                                 id: number;
                                 name: string;
                             }[];
+                            /** @enum {string} */
+                            lifecycle_status?: "active" | "pending" | "suspended" | "disabled" | "archived";
+                            is_owner?: boolean;
+                            last_active_at?: string | null;
+                            /** @description Derived from existing credentials; true means authentication still requires password setup, independently of lifecycle status. */
+                            password_setup_required?: boolean;
                         };
                     };
                 };
@@ -1494,10 +1751,18 @@ export interface operations {
         parameters: {
             query?: {
                 search?: string | null;
-                state?: "enabled" | "disabled" | "archived" | null;
+                /** @description enabled remains an active alias; lifecycle filters include pending and suspended. */
+                state?: "enabled" | "active" | "pending" | "suspended" | "disabled" | "archived" | null;
                 role?: number | null;
                 per_page?: number | null;
                 page?: number | null;
+                sort?: "name_asc" | "name_desc" | "recent";
+                /** @description Optional nullable verification filter; combines with search, role, dates and record scope. */
+                verification?: "verified" | "unverified" | null;
+                /** @description Independent inclusive actor-local calendar-day lower bound. */
+                from?: string;
+                /** @description Independent actor-local upper day, inclusive through exclusive next midnight. */
+                to?: string;
             };
             header?: never;
             path?: never;
@@ -1526,12 +1791,25 @@ export interface operations {
                                 id: number;
                                 name: string;
                             }[];
+                            /** @enum {string} */
+                            lifecycle_status?: "active" | "pending" | "suspended" | "disabled" | "archived";
+                            is_owner?: boolean;
+                            last_active_at?: string | null;
+                            /** @description Derived from existing credentials; true means authentication still requires password setup, independently of lifecycle status. */
+                            password_setup_required?: boolean;
                         }[];
                         meta: {
                             current_page: number;
                             last_page: number;
                             total: number;
                             per_page: number;
+                            /** @description Scoped unarchived counts using search, role, verification and dates, ignoring selected state; null when status visibility is denied. */
+                            status_counts?: {
+                                active: number;
+                                pending: number;
+                                suspended: number;
+                                disabled: number;
+                            } | null;
                         };
                     };
                 };
@@ -1571,7 +1849,8 @@ export interface operations {
                      * @example false
                      */
                     owner?: boolean;
-                };
+                    provisioning?: never;
+                } | components["schemas"]["PasswordLinkUserCreate"];
             };
         };
         responses: {
@@ -1596,11 +1875,18 @@ export interface operations {
                                 id: number;
                                 name: string;
                             }[];
+                            /** @enum {string} */
+                            lifecycle_status?: "active" | "pending" | "suspended" | "disabled" | "archived";
+                            is_owner?: boolean;
+                            last_active_at?: string | null;
+                            /** @description Derived from existing credentials; true means authentication still requires password setup, independently of lifecycle status. */
+                            password_setup_required?: boolean;
                         };
                     };
                 };
             };
             401: components["responses"]["AuthenticationException"];
+            422: components["responses"]["ValidationException"];
         };
     };
     "adminApi.show": {
@@ -1636,6 +1922,12 @@ export interface operations {
                                 id: number;
                                 name: string;
                             }[];
+                            /** @enum {string} */
+                            lifecycle_status?: "active" | "pending" | "suspended" | "disabled" | "archived";
+                            is_owner?: boolean;
+                            last_active_at?: string | null;
+                            /** @description Derived from existing credentials; true means authentication still requires password setup, independently of lifecycle status. */
+                            password_setup_required?: boolean;
                         };
                     };
                 };
@@ -1666,6 +1958,13 @@ export interface operations {
                     /** Format: password */
                     password?: string;
                     owner?: boolean;
+                    first_name?: string | null;
+                    last_name?: string | null;
+                    /** @description Update phone normalization/optionality remains subject to existing server validation. */
+                    phone?: string | null;
+                    /** @enum {string} */
+                    lifecycle_status?: "active" | "pending" | "suspended" | "disabled";
+                    provisioning?: never;
                 };
             };
         };
@@ -1691,12 +1990,19 @@ export interface operations {
                                 id: number;
                                 name: string;
                             }[];
+                            /** @enum {string} */
+                            lifecycle_status?: "active" | "pending" | "suspended" | "disabled" | "archived";
+                            is_owner?: boolean;
+                            last_active_at?: string | null;
+                            /** @description Derived from existing credentials; true means authentication still requires password setup, independently of lifecycle status. */
+                            password_setup_required?: boolean;
                         };
                     };
                 };
             };
             401: components["responses"]["AuthenticationException"];
             404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
         };
     };
     "mobileApi.userAvatar": {
@@ -1775,6 +2081,12 @@ export interface operations {
                                 id: number;
                                 name: string;
                             }[];
+                            /** @enum {string} */
+                            lifecycle_status?: "active" | "pending" | "suspended" | "disabled" | "archived";
+                            is_owner?: boolean;
+                            last_active_at?: string | null;
+                            /** @description Derived from existing credentials; true means authentication still requires password setup, independently of lifecycle status. */
+                            password_setup_required?: boolean;
                         };
                     };
                 };
@@ -1803,12 +2115,13 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {string} */
-                        message: "Account enabled." | "Account disabled. Active sessions and API keys were revoked." | "Account archived and signed out." | "Account restored as disabled." | "Archived account permanently deleted." | "Active sessions and API keys were revoked." | "A password reset email was queued for this account.";
+                        /** @description Server-supplied acknowledgement; developing actions do not invent or require new message text. */
+                        message: string;
                     };
                 };
             };
             401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
             404: components["responses"]["ModelNotFoundException"];
             /** @description An error */
             422: {
@@ -1849,6 +2162,19 @@ export interface operations {
                                 id: number;
                                 name: string;
                             }[];
+                            description?: string | null;
+                            /**
+                             * @description Derived unique canonical scope; null for mixed/no scopes.
+                             * @enum {string|null}
+                             */
+                            default_scope?: "all" | "self" | "created" | "assigned" | null;
+                            /** @description All visible unarchived lifecycle states; null when users-view access is unavailable. */
+                            assigned_count?: number | null;
+                            can_edit?: boolean;
+                            /** Format: date-time */
+                            updated_at?: string | null;
+                            /** @constant */
+                            assigned_count_scope?: "visible_unarchived_accounts";
                         }[];
                     };
                 };
@@ -1865,37 +2191,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": {
-                    /** @example Reviewer */
-                    name: string;
-                    /**
-                     * @example [
-                     *       "users.view"
-                     *     ]
-                     */
-                    grants: string[];
-                    /**
-                     * @example {
-                     *       "users.view": "self"
-                     *     }
-                     */
-                    scopes: {
-                        [key: string]: string;
-                    };
-                    /**
-                     * @example {
-                     *       "name": {
-                     *         "view": true,
-                     *         "edit": false
-                     *       }
-                     *     }
-                     */
-                    fields: {
-                        [key: string]: {
-                            [key: string]: boolean;
-                        };
-                    };
-                };
+                "application/json": components["schemas"]["RoleWrite"];
             };
         };
         responses: {
@@ -1939,13 +2235,30 @@ export interface operations {
                             grants: string[];
                             scopes: {
                                 name: string;
-                                scope: string;
+                                scope: components["schemas"]["RoleScope"];
                             }[];
                             fields: {
                                 field: string;
                                 can_view: boolean | null;
                                 can_edit: boolean | null;
                             }[];
+                            description?: string | null;
+                            /**
+                             * @description Derived unique canonical scope; null for mixed/no scopes.
+                             * @enum {string|null}
+                             */
+                            default_scope?: "all" | "self" | "created" | "assigned" | null;
+                            /** @description All visible unarchived lifecycle states; null when users-view access is unavailable. */
+                            assigned_count?: number | null;
+                            can_edit?: boolean;
+                            /** Format: date-time */
+                            updated_at?: string | null;
+                            /** @constant */
+                            assigned_count_scope?: "visible_unarchived_accounts";
+                            capability_availability?: {
+                                [key: string]: boolean;
+                            };
+                            availability_revision?: string;
                         };
                     };
                 };
@@ -1965,37 +2278,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": {
-                    /** @example Reviewer */
-                    name: string;
-                    /**
-                     * @example [
-                     *       "users.view"
-                     *     ]
-                     */
-                    grants: string[];
-                    /**
-                     * @example {
-                     *       "users.view": "self"
-                     *     }
-                     */
-                    scopes: {
-                        [key: string]: string;
-                    };
-                    /**
-                     * @example {
-                     *       "name": {
-                     *         "view": true,
-                     *         "edit": false
-                     *       }
-                     *     }
-                     */
-                    fields: {
-                        [key: string]: {
-                            [key: string]: boolean;
-                        };
-                    };
-                };
+                "application/json": components["schemas"]["RoleWrite"];
             };
         };
         responses: {
@@ -2127,6 +2410,18 @@ export interface operations {
                 state?: "success" | "denied" | "failed" | null;
                 per_page?: number | null;
                 page?: number | null;
+                category?: "users" | "security" | "reports";
+                /** @description today/7d cannot be combined with explicit dates; all allows dates. */
+                period?: "today" | "7d" | "all";
+                /** @description Actor-local calendar bounds; from inclusive midnight, to through exclusive next midnight. Incompatible with today/7d. */
+                from?: string;
+                /** @description Actor-local calendar bounds; from inclusive midnight, to through exclusive next midnight. Incompatible with today/7d. */
+                to?: string;
+                actor_id?: number;
+                subject_type?: "user" | "role";
+                /** @description Requires subject_type. */
+                subject_id?: number;
+                outcome?: string;
             };
             header?: never;
             path?: never;
@@ -2140,9 +2435,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        data: {
-                            [key: string]: unknown;
-                        }[];
+                        data: components["schemas"]["AuditEvent"][];
                         current_page: number;
                         last_page: number;
                         total: number;
@@ -2226,7 +2519,7 @@ export interface operations {
                      *     }
                      */
                     effects: {
-                        [key: string]: string;
+                        [key: string]: "inherit" | "allow" | "deny";
                     };
                     /**
                      * @example {
@@ -2246,11 +2539,23 @@ export interface operations {
                      */
                     fields: {
                         [key: string]: {
-                            [key: string]: string;
+                            /** @enum {string} */
+                            view: "inherit" | "allow" | "deny";
+                            /** @enum {string} */
+                            edit: "inherit" | "allow" | "deny";
                         };
                     };
-                    /** @example [] */
+                    /**
+                     * @description Always replaces the complete desired assignment list, including in patch mode. IDs must exist.
+                     * @example []
+                     */
                     assigned_ids: number[];
+                    availability_revision?: string;
+                    /**
+                     * @description Patch supplied direct-user rules while preserving omitted active entries. Omission or replace retains legacy replacement semantics for active effects/scopes. Explicit inherit resets a supplied active rule; inactive entries remain stored in both modes.
+                     * @enum {string}
+                     */
+                    update_mode?: "patch" | "replace";
                 };
             };
         };
@@ -2467,6 +2772,12 @@ export interface operations {
                                 email: string;
                                 status: string;
                                 email_verified_at: string | null;
+                                /** @enum {string} */
+                                lifecycle_status?: "active" | "pending" | "suspended" | "disabled" | "archived";
+                                is_owner?: boolean;
+                                last_active_at?: string | null;
+                                /** @description Derived from existing credentials; true means authentication still requires password setup, independently of lifecycle status. */
+                                password_setup_required?: boolean;
                             };
                             access_revision: number;
                             configuration_revision: string;
@@ -2499,6 +2810,10 @@ export interface operations {
                             appearance: {
                                 [key: string]: unknown;
                             };
+                            capability_availability?: {
+                                [key: string]: boolean;
+                            };
+                            availability_revision?: string;
                         };
                     };
                 };
@@ -2614,7 +2929,7 @@ export interface operations {
     "mobileApi.dashboard": {
         parameters: {
             query?: {
-                period?: "7" | "30";
+                period?: (7 | 30) | ("7" | "30");
             };
             header?: never;
             path?: never;
@@ -2633,25 +2948,31 @@ export interface operations {
                                 [key: string]: number;
                             } | number[];
                             new_users: {
-                                [key: string]: unknown;
+                                /** @description Actor-selected legacy display date format, not ISO date. */
+                                date: string;
+                                label: string;
+                                count: number;
                             }[];
-                            recent: {
-                                id: number;
-                                public_id: string;
-                                action: string;
-                                outcome: string;
-                                created_at: string;
-                                actor: {
-                                    public_id: string | null;
-                                    name: string | null;
-                                };
-                                changes?: {
-                                    [key: string]: unknown;
-                                } | unknown[];
-                                request_id?: string | null;
-                            }[];
+                            recent: components["schemas"]["AuditEvent"][];
                             timezone: string;
-                            period: number;
+                            /** @enum {integer} */
+                            period: 7 | 30;
+                            daily_metrics?: {
+                                total_users: number | null;
+                                active_today: number | null;
+                                events_today: number | null;
+                                roles: number | null;
+                            };
+                            /** @description Oldest first; server zero-filled actor-local days including today. No audit access yields an empty series. */
+                            activity_series?: {
+                                /** Format: date */
+                                date: string;
+                                /** @enum {string} */
+                                label: "Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat" | "Sun";
+                                count: number;
+                            }[];
+                            /** @constant */
+                            activity_precision_seconds?: 60;
                         };
                     };
                 };
@@ -2694,6 +3015,12 @@ export interface operations {
                                     id: number;
                                     name: string;
                                 }[];
+                                /** @enum {string} */
+                                lifecycle_status?: "active" | "pending" | "suspended" | "disabled" | "archived";
+                                is_owner?: boolean;
+                                last_active_at?: string | null;
+                                /** @description Derived from existing credentials; true means authentication still requires password setup, independently of lifecycle status. */
+                                password_setup_required?: boolean;
                             };
                             actions: {
                                 [key: string]: boolean;
@@ -2802,6 +3129,10 @@ export interface operations {
                                     can_edit: boolean | null;
                                 }[];
                             } | null;
+                            capability_availability?: {
+                                [key: string]: boolean;
+                            };
+                            availability_revision?: string;
                         };
                     };
                 };
@@ -2830,7 +3161,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                id: string;
+                id: number | string;
             };
             cookie?: never;
         };
@@ -2842,7 +3173,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        data: string;
+                        data: components["schemas"]["AuditEvent"];
                     };
                 };
             };
@@ -3096,6 +3427,9 @@ export interface operations {
                                 provider: string;
                                 status: string;
                                 project_id: string | null;
+                                available?: boolean;
+                                /** @enum {string|null} */
+                                unavailable_reason?: "api_disabled" | "in_app_disabled" | "disabled" | "unconfigured" | null;
                             };
                             current_device_registered: boolean;
                         };
@@ -3419,6 +3753,7 @@ export interface operations {
                             [key: string]: boolean;
                         };
                     };
+                    availability_revision?: string;
                 };
             };
         };
@@ -3498,6 +3833,29 @@ export interface operations {
             };
             401: components["responses"]["AuthenticationException"];
             422: components["responses"]["ValidationException"];
+        };
+    };
+    "mobileApi.roleCreateContext": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Source checkpoint; database integration not verified */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["RoleCreateContext"];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
         };
     };
 }

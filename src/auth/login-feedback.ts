@@ -1,5 +1,6 @@
 import { ApiError, ApiTransportError } from "@/api/client";
 import { t } from "@/localization";
+import { ZodError } from "zod";
 
 export type LoginFeedback = {
   title: string;
@@ -11,6 +12,11 @@ export type LoginFeedback = {
 // Never display an arbitrary gateway message, validation string or stack trace.
 // Specific account reasons require an explicit response signal, not just a 403.
 export function loginFeedback(error: unknown): LoginFeedback {
+  if (error instanceof ApiTransportError && error.reason === "tls")
+    return {
+      title: t("secureConnectionFailed"),
+      hint: t("secureConnectionFailedHint"),
+    };
   if (error instanceof ApiTransportError)
     return {
       title:
@@ -19,6 +25,8 @@ export function loginFeedback(error: unknown): LoginFeedback {
           : "Couldn’t connect",
       hint: "Check your connection and try again. Your details are still here.",
     };
+  if (error instanceof ZodError || error instanceof SyntaxError)
+    return { title: t("invalidResponse"), hint: t("invalidResponseHint") };
   if (!(error instanceof ApiError))
     return {
       title: "Sign-in couldn’t finish",

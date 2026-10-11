@@ -115,7 +115,7 @@ function PreferencesEditor() {
       <FeaturePane wide>
         <View style={{ gap: 10 }}>
           <View style={{ minHeight: 27, justifyContent: "center" }}>
-            <Label accessibilityRole="header" size="title">
+            <Label accessibilityRole="header" size="section">
               {t("appearance")}
             </Label>
           </View>
@@ -140,7 +140,7 @@ function PreferencesEditor() {
         <View
           style={{ minHeight: 27, justifyContent: "center", marginTop: 10 }}
         >
-          <Label size="title">Region</Label>
+          <Label size="section">Region</Label>
         </View>
         <View>
           <Row
@@ -161,6 +161,7 @@ function PreferencesEditor() {
         {regionOpen && (
           <Sheet
             title="Region"
+            closeDisabled={work.busy}
             close={() => {
               if (!work.busy) setRegionOpen(false);
             }}
@@ -223,7 +224,7 @@ function PreferencesEditor() {
         <View
           style={{ minHeight: 27, justifyContent: "center", marginTop: 10 }}
         >
-          <Label size="title">Device security</Label>
+          <Label size="section">Device security</Label>
         </View>
         <Card>
           <ToggleRow
@@ -243,11 +244,11 @@ function PreferencesEditor() {
         <View
           style={{ minHeight: 27, justifyContent: "center", marginTop: 10 }}
         >
-          <Label size="title">Notifications</Label>
+          <Label size="section">Notifications</Label>
         </View>
         <PushPreferences />
         <Card>
-          <Label accessibilityRole="header" size="title">
+          <Label accessibilityRole="header" size="section">
             {t("notificationPreferences")}
           </Label>
           {securityEnabled ? (

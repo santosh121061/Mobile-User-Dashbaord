@@ -3,6 +3,7 @@ import { useState } from "react";
 import { View } from "react-native";
 import { useTheme } from "@/theme";
 import { useTitle } from "@/components/forms";
+import { userStatusLabel } from "@/features/user-status";
 import { router } from "expo-router";
 import { api, ApiError, unwrap } from "@/api/client";
 import { useRead, useSearch } from "@/api/hooks";
@@ -180,7 +181,7 @@ function SearchResults() {
                           <Row
                             key={user.id}
                             title={user.name ?? user.public_id}
-                            subtitle={[user.email, user.status]
+                            subtitle={[user.email, userStatusLabel(user)]
                               .filter(Boolean)
                               .join(" · ")}
                             onPress={() => void open(`/users/${user.id}`)}

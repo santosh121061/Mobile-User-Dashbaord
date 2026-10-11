@@ -343,12 +343,13 @@ function ProfileEditor({
       {editing && (
         <Sheet
           title={t("personalDetails")}
+          closeDisabled={work.busy}
           close={() => {
             if (!work.busy) setEditing(false);
           }}
         >
           <Card>
-            <Label size="title">{t("personalDetails")}</Label>
+            <Label size="section">{t("personalDetails")}</Label>
             <Input
               label={t("email")}
               value={profile.email}

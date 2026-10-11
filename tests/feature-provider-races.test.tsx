@@ -12,7 +12,7 @@ import * as SecureStore from "expo-secure-store";
 import { router } from "expo-router";
 import * as fence from "../src/storage/fence";
 import { SessionProvider, useSession } from "../src/auth/session";
-import { ConfirmationProvider } from "../src/auth/confirmation";
+import { AuthenticatedActionProvider } from "../src/auth/authenticated-actions";
 import { queryClient } from "../src/api/query";
 import { ThemeProvider } from "../src/theme";
 import { AdminAvatar } from "../src/features/admin-avatar";
@@ -21,7 +21,7 @@ import More from "../src/app/(app)/(tabs)/more";
 import UserForm from "../src/features/user-form";
 import fixtures from "../api/fixtures.json";
 
-// Only device/navigation surfaces are mocked. Session, confirmation, feature work,
+// Only device/navigation surfaces are mocked. Session, authenticated actions, feature work,
 // query hooks, request construction and response middleware are the real modules.
 jest.mock("../src/storage/fence", () => ({
   activate: jest.fn(),
@@ -171,9 +171,9 @@ const view = (kind: "avatar" | "inbox" | "more" | "user") => (
   <SessionProvider>
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <ConfirmationProvider>
+        <AuthenticatedActionProvider>
           <Harness kind={kind} />
-        </ConfirmationProvider>
+        </AuthenticatedActionProvider>
       </ThemeProvider>
     </QueryClientProvider>
   </SessionProvider>
@@ -283,28 +283,17 @@ it("opens the inbox's allowlisted related record after real delayed revalidation
   await waitFor(() => expect(router.push).toHaveBeenCalledWith("/users/2"));
   screen.unmount();
 });
-it("resets a user form and navigates back after confirmed save through real delayed revalidation", async () => {
+it("resets a user form and navigates back after direct save without revalidation or a password prompt", async () => {
   const screen = await ready("user");
   await waitFor(() => expect(screen.getByLabelText("First name")).toBeTruthy());
   fireEvent.changeText(screen.getByLabelText("First name"), "Edited name");
   fireEvent.press(screen.getByRole("button", { name: "Save changes" }));
-  await waitFor(() =>
-    expect(screen.getByTestId("confirm-action")).toBeTruthy(),
-  );
+  expect(screen.queryByTestId("confirm-action")).toBeNull();
   expect(screen.queryByLabelText("Current password")).toBeNull();
-  const held = deferred();
-  handler = (request) =>
-    new URL(request.url).pathname.endsWith("/mobile/bootstrap")
-      ? held.promise
-      : defaultResponse(request);
-  fireEvent.press(screen.getByRole("button", { name: "Confirm action" }));
-  await waitFor(() => expect(requests("/mobile/bootstrap")).toHaveLength(2));
-  expect(router.back).not.toHaveBeenCalled();
-  await act(async () =>
-    held.resolve(defaultResponse(requests("/mobile/bootstrap")[1]!)),
-  );
   await waitFor(() => expect(router.back).toHaveBeenCalledTimes(1));
   expect(requests("/users/2")).toHaveLength(1);
+  expect(requests("/mobile/bootstrap")).toHaveLength(1);
+  expect(requests("/mobile/step-up")).toHaveLength(0);
   expect(
     screen.getByRole("button", { name: "Save changes" }).props
       .accessibilityState.disabled,

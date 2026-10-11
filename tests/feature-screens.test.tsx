@@ -13,7 +13,7 @@ import { router } from "expo-router";
 import { bootstrapSchema } from "../src/api/runtime";
 import { api } from "../src/api/client";
 import { useRead } from "../src/api/hooks";
-import { useConfirmation } from "../src/auth/confirmation";
+import { useAuthenticatedAction } from "../src/auth/authenticated-actions";
 import { ThemeProvider } from "../src/theme";
 import { useFeatureWork } from "../src/features/use-feature-work";
 import { EffectiveAccess } from "../src/features/effective-access";
@@ -22,8 +22,11 @@ import { AvatarPicker } from "../src/features/avatar";
 import { AdminAvatar } from "../src/features/admin-avatar";
 import { UnreadBadge } from "../src/features/inbox";
 import Profile from "../src/app/(app)/profile";
+import Password from "../src/app/(app)/password";
 import Preferences from "../src/app/(app)/preferences";
 import Notifications from "../src/app/(app)/notifications";
+import Sessions from "../src/app/(app)/sessions";
+import AuditDetail from "../src/app/(app)/activity/[id]";
 import UserForm from "../src/features/user-form";
 import Users from "../src/app/(app)/(tabs)/users";
 import Roles from "../src/app/(app)/roles/index";
@@ -36,6 +39,7 @@ let mockPhase = "ready";
 let mockCurrent = true;
 let mockQueries: Record<string, any>;
 const mockRefresh = jest.fn(async () => {});
+const mockLogout = jest.fn(async () => {});
 const mockCapture = jest.fn(() => {
   const controller = new AbortController();
   let released = false;
@@ -64,15 +68,31 @@ jest.mock("../src/auth/session", () => ({
     phase: mockPhase,
     captureWork: mockCapture,
     refresh: mockRefresh,
+    logout: mockLogout,
     biometric: false,
     setBiometric: jest.fn(async () => true),
   }),
 }));
 jest.mock("../src/api/hooks", () => ({
-  useRead: jest.fn(
-    (module: string) =>
-      mockQueries[module] ?? { isPending: false, refetch: jest.fn() },
-  ),
+  useRead: jest.fn((module: string) => {
+    const query = mockQueries[module] ?? {
+      isPending: false,
+      refetch: jest.fn(),
+    };
+    if (
+      module === "access" &&
+      query.data &&
+      !Object.hasOwn(query.data, "availability_revision")
+    )
+      query.data = {
+        capability_availability: Object.fromEntries(
+          Object.keys(query.data.catalog).map((key) => [key, true]),
+        ),
+        availability_revision: mockSnapshot.availability_revision,
+        ...query.data,
+      };
+    return query;
+  }),
   usePages: jest.fn(() => mockQueries.pages),
   useSearch: () => {
     const [search, setSearch] = jest
@@ -81,7 +101,9 @@ jest.mock("../src/api/hooks", () => ({
     return { search, setSearch, debounced: search };
   },
 }));
-jest.mock("../src/auth/confirmation", () => ({ useConfirmation: jest.fn() }));
+jest.mock("../src/auth/authenticated-actions", () => ({
+  useAuthenticatedAction: jest.fn(),
+}));
 jest.mock("../src/api/client", () => {
   const actual = jest.requireActual("../src/api/client");
   return {
@@ -91,6 +113,7 @@ jest.mock("../src/api/client", () => {
       POST: jest.fn(),
       PATCH: jest.fn(),
       PUT: jest.fn(),
+      DELETE: jest.fn(),
     },
   };
 });
@@ -194,6 +217,10 @@ beforeEach(() => {
   mockCurrent = true;
   mockPhase = "ready";
   mockSnapshot = bootstrapSchema.parse(fixtures.bootstrap.data);
+  mockSnapshot.availability_revision = "a".repeat(64);
+  mockSnapshot.capability_availability = Object.fromEntries(
+    Object.keys(mockSnapshot.actions).map((key) => [key, true]),
+  );
   mockSnapshot.features["users.avatar.enabled"] = true;
   mockSnapshot.features["notifications.security_email.enabled"] = true;
   mockSnapshot.features["notifications.in_app.enabled"] = true;
@@ -235,7 +262,7 @@ beforeEach(() => {
     },
   };
   jest
-    .mocked(useConfirmation)
+    .mocked(useAuthenticatedAction)
     .mockReturnValue(
       jest.fn(async (_method, _path, action) =>
         action(new AbortController().signal),
@@ -250,6 +277,90 @@ beforeEach(() => {
     .mockResolvedValue(response({ data: target().user }) as never);
 });
 
+it("routes session revocation through ordinary destructive consent and an abortable request", async () => {
+  mockQueries.pages.rows = [
+    {
+      id: "other-device",
+      name: "Other device",
+      current: false,
+      created_at: "2026-10-10T10:00:00Z",
+      last_used_at: null,
+      expires_at: null,
+    },
+  ];
+  jest.mocked(api.DELETE).mockResolvedValue(response() as never);
+  const screen = render(<Sessions />, { wrapper });
+  fireEvent.press(screen.getByRole("button", { name: /Other device/ }));
+  fireEvent.press(screen.getByRole("button", { name: "Revoke" }));
+  await waitFor(() => expect(api.DELETE).toHaveBeenCalled());
+  expect(
+    jest.mocked(useAuthenticatedAction).mock.results[0]!.value,
+  ).toHaveBeenCalledWith(
+    "DELETE",
+    "/api/v1/profile/mobile-sessions/other-device",
+    expect.any(Function),
+    expect.any(AbortSignal),
+    true,
+  );
+  expect(api.DELETE).toHaveBeenCalledWith(
+    "/v1/profile/mobile-sessions/{id}",
+    expect.objectContaining({
+      params: { path: { id: "other-device" } },
+      signal: expect.any(AbortSignal),
+    }),
+  );
+  expect(mockLogout).not.toHaveBeenCalled();
+});
+it("does not let a late old-session revocation sign out a newer session", async () => {
+  mockQueries.pages.rows = [
+    {
+      id: "old-device",
+      name: "Old device",
+      current: true,
+      created_at: "2026-10-10T10:00:00Z",
+      last_used_at: null,
+      expires_at: null,
+    },
+  ];
+  let finish!: (value: any) => void;
+  jest.mocked(api.DELETE).mockImplementation(
+    () =>
+      new Promise((resolve) => {
+        finish = resolve;
+      }) as never,
+  );
+  const screen = render(<Sessions />, { wrapper });
+  fireEvent.press(screen.getByRole("button", { name: /This device/ }));
+  fireEvent.press(screen.getByRole("button", { name: "Revoke" }));
+  await waitFor(() => expect(api.DELETE).toHaveBeenCalled());
+  mockCurrent = false;
+  mockPhase = "locked";
+  await act(async () => finish(response()));
+  expect(mockLogout).not.toHaveBeenCalled();
+  expect(mockQueries.pages.refetch).not.toHaveBeenCalled();
+});
+it("routes projected audit related records through known enabled app modules", () => {
+  mockSnapshot.modules.activity = true;
+  mockSnapshot.modules.roles = false;
+  mockQueries["audit-detail"] = ready({
+    id: "2",
+    public_id: "event-2",
+    action: "users.updated",
+    outcome: "success",
+    created_at: "2026-10-10T10:00:00Z",
+    actor: { name: "Permitted actor", public_id: "actor-1" },
+    field_changes: [],
+    related: [
+      { resource: "users", id: 7, path: "https://untrusted.invalid/" },
+      { resource: "roles", id: 5, path: "/roles/5" },
+    ],
+  });
+  const screen = render(<AuditDetail />, { wrapper });
+  expect(screen.getByText("event-2")).toBeTruthy();
+  expect(screen.queryByRole("button", { name: "Role details" })).toBeNull();
+  fireEvent.press(screen.getByRole("button", { name: "User details" }));
+  expect(router.push).toHaveBeenCalledWith("/users/7");
+});
 it("preserves unsaved structured profile edits during a background refresh and saves through the shared profile contract", async () => {
   const screen = render(<Profile />, { wrapper });
   fireEvent.press(screen.getByRole("button", { name: /Personal details/ }));
@@ -338,7 +449,7 @@ it("stages personal photo removal with a Laravel boolean multipart value until s
       .accessibilityState.disabled,
   ).toBe(true);
 });
-it("uploads and removes admin photos only through confirmed multipart writes with a current-session signal", async () => {
+it("uploads admin photos directly and confirms removal through multipart writes with a current-session signal", async () => {
   jest
     .mocked(ImagePicker.requestMediaLibraryPermissionsAsync)
     .mockResolvedValue({ granted: true } as never);
@@ -456,7 +567,7 @@ it("retains unsaved time zone edits while selecting a theme and receiving refres
   fireEvent.press(screen.getByRole("button", { name: /^Time zone,/ }));
   expect(screen.getByLabelText("Time zone").props.value).toBe("Europe/London");
 });
-it("disables protected owner removal while retaining the authorized unlock action and confirmed signal", async () => {
+it("disables protected owner removal while retaining the direct authorized unlock action and current-session signal", async () => {
   const form = render(<UserForm id="2" />, { wrapper });
   expect(form.getByLabelText("Governance owner").props.disabled).toBe(true);
   form.unmount();
@@ -562,6 +673,77 @@ it("keeps access edits when a fresh target revision arrives and restricts scope 
       .selected,
   ).toBe(true);
 });
+it("uses server scope ceilings for audit delegation without adding an undelegatable self scope", () => {
+  mockQueries.access = ready({
+    effects: {},
+    scopes: {},
+    fields: [],
+    assigned_ids: [],
+    revision: 1,
+    effective: [],
+    catalog: { "audit.view": "View activity" },
+    field_catalog: {},
+    delegatable: { "audit.view": ["created", "assigned"] },
+    field_delegatable: {},
+    delegation: { rules: [], fields: [] },
+  });
+  const screen = render(<UserAccess />, { wrapper });
+  fireEvent.press(screen.getByRole("button", { name: "Delegation ceiling" }));
+  expect(screen.getByRole("button", { name: "Created by me" })).toBeTruthy();
+  expect(screen.getByRole("button", { name: "Assigned users" })).toBeTruthy();
+  expect(screen.queryByRole("button", { name: "Self only" })).toBeNull();
+  expect(screen.queryByRole("button", { name: "All users" })).toBeNull();
+  expect(
+    screen.getByRole("button", { name: "Allow" }).props.accessibilityState
+      .selected,
+  ).toBe(false);
+});
+it.each([false, true])(
+  "sends the full desired assignment list after a context refresh with assignmentsEdited=%s",
+  async (assignmentsEdited) => {
+    mockQueries.access = ready({
+      effects: { "users.view": "deny" },
+      scopes: { "users.view": "self" },
+      fields: [],
+      assigned_ids: ["8"],
+      revision: 1,
+      effective: [],
+      catalog: { "users.view": "View users" },
+      field_catalog: {},
+      delegatable: { "users.view": ["self"] },
+      field_delegatable: {},
+      delegation: null,
+    });
+    const screen = render(<UserAccess />, { wrapper });
+    fireEvent.press(screen.getByRole("button", { name: "Allow" }));
+    if (assignmentsEdited)
+      fireEvent.changeText(
+        screen.getByLabelText("Assigned account IDs"),
+        "10, 11",
+      );
+    mockQueries.access = ready({
+      ...mockQueries.access.data,
+      assigned_ids: ["8", "9"],
+      revision: 2,
+    });
+    screen.rerender(<UserAccess />);
+    expect(screen.getByLabelText("Assigned account IDs").props.value).toBe(
+      assignmentsEdited ? "10, 11" : "8, 9",
+    );
+    fireEvent.press(screen.getByRole("button", { name: "Save changes" }));
+    await waitFor(() =>
+      expect(api.PUT).toHaveBeenCalledWith(
+        "/v1/users/{user}/access",
+        expect.objectContaining({
+          body: expect.objectContaining({
+            update_mode: "patch",
+            assigned_ids: assignmentsEdited ? [10, 11] : [8, 9],
+          }),
+        }),
+      ),
+    );
+  },
+);
 it("refreshes recipient-scoped inbox and unread count after marking a notice, and never routes on a read write", async () => {
   mockQueries.pages.rows = [
     {
@@ -831,6 +1013,14 @@ it("keeps bulk permanent deletion out of the archived mobile directory", () => {
   const screen = render(<Users />, { wrapper });
   fireEvent.press(screen.getByRole("button", { name: "Archived" }));
   fireEvent.press(screen.getByRole("button", { name: "Select" }));
+  mockQueries.pages.rows = [
+    { id: "2", public_id: "user-2", name: "Archived account", archived: true },
+  ];
+  screen.rerender(<Users />);
+  fireEvent.press(
+    screen.getByRole("button", { name: "Archived account, Archived" }),
+  );
+  fireEvent.press(screen.getByRole("button", { name: "Actions" }));
   expect(
     screen.queryByRole("button", { name: "Delete permanently" }),
   ).toBeNull();
@@ -838,4 +1028,22 @@ it("keeps bulk permanent deletion out of the archived mobile directory", () => {
     screen.getByRole("button", { name: "Restore account as disabled" }),
   ).toBeTruthy();
   screen.unmount();
+});
+
+it("requires the existing current-password field only in the actual Change Password form", async () => {
+  const screen = render(<Password />, { wrapper });
+  fireEvent.changeText(
+    screen.getByLabelText("New password"),
+    "SyntheticNewPassword123!",
+  );
+  fireEvent.changeText(
+    screen.getByLabelText("Confirm password"),
+    "SyntheticNewPassword123!",
+  );
+  fireEvent.press(screen.getByRole("button", { name: "Update password" }));
+  await waitFor(() =>
+    expect(screen.getByText("Check the highlighted fields.")).toBeTruthy(),
+  );
+  expect(api.PUT).not.toHaveBeenCalled();
+  expect(jest.mocked(useAuthenticatedAction)).not.toHaveBeenCalled();
 });

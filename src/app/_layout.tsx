@@ -13,7 +13,7 @@ import * as SplashScreen from "expo-splash-screen";
 import * as ScreenCapture from "expo-screen-capture";
 import { StatusBar } from "expo-status-bar";
 import { SessionProvider } from "@/auth/session";
-import { ConfirmationProvider } from "@/auth/confirmation";
+import { AuthenticatedActionProvider } from "@/auth/authenticated-actions";
 import { ThemeProvider, useTheme } from "@/theme";
 import { queryClient } from "@/api/query";
 import { Loading } from "@/components/ui";
@@ -64,11 +64,15 @@ export default function Root() {
     Inter_500Medium: require("../../assets/fonts/Inter-Medium.ttf"),
     Inter_600SemiBold: require("../../assets/fonts/Inter-SemiBold.ttf"),
     Inter_700Bold: require("../../assets/fonts/Inter-Bold.ttf"),
+    Inter_650DemiBold: require("../../assets/fonts/Inter-DemiBold.ttf"),
+    Inter_650DemiBold15: require("../../assets/fonts/Inter-DemiBold-Optical15.ttf"),
+    Inter_750ExtraBold15: require("../../assets/fonts/Inter-ExtraBold-Optical15.ttf"),
     Inter_400Regular15: require("../../assets/fonts/Inter-Regular-Optical15.ttf"),
     Inter_600SemiBold15: require("../../assets/fonts/Inter-SemiBold-Optical15.ttf"),
     Inter_600SemiBold18: require("../../assets/fonts/Inter-SemiBold-Optical18.ttf"),
     Inter_600SemiBold22: require("../../assets/fonts/Inter-SemiBold-Optical22.ttf"),
     Inter_700Bold22: require("../../assets/fonts/Inter-Bold-Optical22.ttf"),
+    Inter_700Bold21: require("../../assets/fonts/Inter-Bold-Optical21.ttf"),
     Inter_700Bold26: require("../../assets/fonts/Inter-Bold-Optical26.ttf"),
     Inter_700Bold30: require("../../assets/fonts/Inter-Bold-Optical30.ttf"),
   });
@@ -91,13 +95,13 @@ export default function Root() {
       <QueryClientProvider client={queryClient}>
         <SessionProvider>
           <ThemeProvider>
-            <ConfirmationProvider>
+            <AuthenticatedActionProvider>
               <ModuleRegistryProvider>
                 <PushProvider>
                   <Navigation />
                 </PushProvider>
               </ModuleRegistryProvider>
-            </ConfirmationProvider>
+            </AuthenticatedActionProvider>
           </ThemeProvider>
         </SessionProvider>
       </QueryClientProvider>

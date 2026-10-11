@@ -13,6 +13,7 @@ const commands = new Set([
     "assertNotVisible",
     "tapOn",
     "inputText",
+    "eraseText",
     "hideKeyboard",
     "scrollUntilVisible",
     "back",
@@ -34,6 +35,11 @@ function checkSteps(file, steps) {
             throw new Error("Unsupported flow command");
         const [command] = keys;
         const value = typeof step === "string" ? null : step[command];
+        if (
+            command === "eraseText" &&
+            !(Number.isInteger(value) && value > 0 && value <= 1000)
+        )
+            throw new Error("Erase count must be bounded to1000 characters");
         if (command === "runFlow") {
             if (typeof value === "string")
                 checkFlow(localReference(file, value));

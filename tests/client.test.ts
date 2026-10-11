@@ -3,6 +3,7 @@ import {
   attachSession,
   check,
   ApiError,
+  ApiTransportError,
   retryAfterSeconds,
 } from "../src/api/client";
 describe("Session-bound API responses", () => {
@@ -16,6 +17,52 @@ describe("Session-bound API responses", () => {
     attachSession(() => credential, expire, refresh);
   });
   afterEach(() => jest.restoreAllMocks());
+  it("does not report a Request construction error as a network failure or dispatch it", async () => {
+    jest.useFakeTimers();
+    try {
+      const failure = new TypeError("Fixture Request polyfill failure");
+      const fetcher = jest.spyOn(global, "fetch");
+      jest.spyOn(global, "Request").mockImplementation(() => {
+        throw failure;
+      });
+      await expect(api.GET("/v1/mobile/config")).rejects.toBe(failure);
+      expect(fetcher).not.toHaveBeenCalled();
+      expect(jest.getTimerCount()).toBe(0);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+  it.each([
+    new Error("javax.net.ssl.SSLHandshakeException: protocol_version"),
+    {
+      message: "fetch failed",
+      cause: { code: "EPROTO", message: "TLS alert 70" },
+    },
+    new Error(
+      "java.security.cert.CertPathValidatorException: Trust anchor unavailable",
+    ),
+  ])(
+    "classifies a dispatched TLS failure without weakening or replaying the request",
+    async (failure) => {
+      const fetcher = jest.spyOn(global, "fetch").mockRejectedValue(failure);
+      await expect(api.GET("/v1/mobile/config")).rejects.toMatchObject({
+        reason: "tls",
+        cause: failure,
+      });
+      expect(fetcher).toHaveBeenCalledTimes(1);
+    },
+  );
+  it("keeps an ordinary dispatched connectivity failure distinct from TLS", async () => {
+    jest
+      .spyOn(global, "fetch")
+      .mockRejectedValue(new TypeError("Network request failed"));
+    await expect(api.GET("/v1/mobile/config")).rejects.toEqual(
+      expect.objectContaining({ reason: "network" }),
+    );
+    await expect(api.GET("/v1/mobile/config")).rejects.toBeInstanceOf(
+      ApiTransportError,
+    );
+  });
   it("does not let a delayed 401 from a previous account wipe the new session", async () => {
     let resolve!: (value: Response) => void;
     const fetcher = jest.spyOn(global, "fetch").mockImplementation(

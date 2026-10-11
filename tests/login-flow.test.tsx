@@ -1,5 +1,5 @@
 import React from "react";
-import { Platform } from "react-native";
+import { Image, Platform } from "react-native";
 import { act, fireEvent, render, waitFor } from "@testing-library/react-native";
 import * as SecureStore from "expo-secure-store";
 import { SessionProvider } from "../src/auth/session";
@@ -7,6 +7,8 @@ import AuthLayout from "../src/app/(auth)/_layout";
 import { queryClient } from "../src/api/query";
 import fixtures from "../api/fixtures.json";
 import { t } from "../src/localization";
+let mockAuthScreen: "login" | "forgot" = "login";
+const mockRouterReplace = jest.fn();
 
 jest.mock("expo-constants", () => {
   // Exercise the actual Request/Headers/Response polyfill installed by React Native.
@@ -33,7 +35,10 @@ jest.mock("expo-router", () => {
   return {
     Stack: () =>
       react.createElement(
-        jest.requireActual("../src/app/(auth)/login").default,
+        (mockAuthScreen === "forgot"
+          ? jest.requireActual("../src/app/(auth)/forgot-password")
+          : jest.requireActual("../src/app/(auth)/login")
+        ).default,
       ),
     Redirect: ({ href }: { href: string }) =>
       react.createElement(
@@ -41,7 +46,7 @@ jest.mock("expo-router", () => {
         { testID: "auth-redirect" },
         href,
       ),
-    useRouter: () => ({ push: jest.fn() }),
+    useRouter: () => ({ push: jest.fn(), replace: mockRouterReplace }),
   };
 });
 jest.mock("expo-network", () => ({
@@ -103,6 +108,7 @@ const submit = (
 beforeEach(() => {
   queryClient.clear();
   jest.clearAllMocks();
+  mockAuthScreen = "login";
   jest.replaceProperty(Platform, "OS", "android");
   requests.length = 0;
   respond = normalResponse;
@@ -119,17 +125,64 @@ afterEach(() => {
   queryClient.clear();
   jest.restoreAllMocks();
 });
+it("shows a privacy-preserving recovery success state and clears a previous request failure", async () => {
+  mockAuthScreen = "forgot";
+  let recoveryRequests = 0;
+  respond = (request) =>
+    request.url.endsWith("/auth/forgot-password")
+      ? json(
+          ++recoveryRequests === 1
+            ? { message: "Internal recovery failure" }
+            : { message: "Reset link sent" },
+          recoveryRequests === 1 ? 500 : 200,
+        )
+      : normalResponse(request);
+  const screen = render(
+    <SessionProvider>
+      <AuthLayout />
+    </SessionProvider>,
+  );
+  await waitFor(() =>
+    expect(screen.getByLabelText("Email address")).toBeTruthy(),
+  );
+  fireEvent.changeText(
+    screen.getByLabelText("Email address"),
+    "fixture@example.test",
+  );
+  fireEvent.press(screen.getByRole("button", { name: "Send reset link" }));
+  await waitFor(() =>
+    expect(screen.getAllByText(t("serverError")).length).toBeGreaterThan(0),
+  );
+  fireEvent.press(screen.getByRole("button", { name: "Send reset link" }));
+  await waitFor(() =>
+    expect(screen.getByText("Check your email")).toBeTruthy(),
+  );
+  expect(screen.getByText(t("recoverySent"))).toBeTruthy();
+  expect(screen.queryAllByText(t("serverError"))).toHaveLength(0);
+  expect(screen.queryByText("Reset link sent")).toBeNull();
+  expect(screen.queryByLabelText("Email address")).toBeNull();
+  fireEvent.press(screen.getByRole("button", { name: "Send another link" }));
+  expect(screen.getByLabelText("Email address").props.value).toBe(
+    "fixture@example.test",
+  );
+  expect(recoveryRequests).toBe(2);
+  fireEvent.press(screen.getByRole("button", { name: "Send reset link" }));
+  await waitFor(() =>
+    expect(
+      screen.getByRole("button", { name: "Back to sign in" }),
+    ).toBeTruthy(),
+  );
+  fireEvent.press(screen.getByRole("button", { name: "Back to sign in" }));
+  expect(mockRouterReplace).toHaveBeenCalledWith("/(auth)/login");
+});
 
 it("loads backend branding anonymously, then sends the exact mobile login contract and bearer bootstrap", async () => {
   const screen = await open();
-  expect(screen.getByLabelText("Knit Infotech")).toBeTruthy();
   expect(
-    screen
-      .getAllByTestId("admin-brand-image")
-      .map((image) => image.props.source.uri),
+    screen.UNSAFE_getAllByType(Image).map((image) => image.props.source.uri),
   ).toEqual([
     "https://up.knitinfotech.com" +
-      fixtures.configuration.data.branding.logo,
+      fixtures.configuration.data.branding.compact_logo,
   ]);
   expect(requests[0]!.headers.get("Authorization")).toBeNull();
   submit(screen, "  fixture@example.test  ");
@@ -196,21 +249,51 @@ it("forwards an existing short password without imposing reset-password complexi
 });
 
 it.each([
-  [422, "The supplied credentials could not be authenticated.", "Email or password is incorrect", false],
-  [403, "Verify your email before signing in.", "Verify your email to sign in", true],
+  [
+    422,
+    "The supplied credentials could not be authenticated.",
+    "Email or password is incorrect",
+    false,
+  ],
+  [
+    403,
+    "Verify your email before signing in.",
+    "Verify your email to sign in",
+    true,
+  ],
   [403, "Unexpected private policy response", "Sign-in isn’t allowed", false],
-] as const)("handles Laravel %s login responses with safe actionable feedback", async (status, message, title, verify) => {
-  respond=request => request.url.endsWith("/auth/login") ? json({message,...(status === 422 ? {errors:{email:[message]}}:{})}, status) : normalResponse(request);
-  const screen=await open();
-  submit(screen);
-  await waitFor(() => expect(screen.getByText(title)).toBeTruthy());
-  expect(screen.getByTestId("auth-email").props.value).toBe("fixture@example.test");
-  expect(screen.getByTestId("auth-password").props.value).toBe("SyntheticPassword");
-  expect(!!screen.queryByRole("button", {name:t("verification")})).toBe(verify);
-  expect(screen.queryByText("Unexpected private policy response")).toBeNull();
-  expect(requests.filter(request => request.url.endsWith("/auth/login"))).toHaveLength(1);
-  screen.unmount();
-});
+] as const)(
+  "handles Laravel %s login responses with safe actionable feedback",
+  async (status, message, title, verify) => {
+    respond = (request) =>
+      request.url.endsWith("/auth/login")
+        ? json(
+            {
+              message,
+              ...(status === 422 ? { errors: { email: [message] } } : {}),
+            },
+            status,
+          )
+        : normalResponse(request);
+    const screen = await open();
+    submit(screen);
+    await waitFor(() => expect(screen.getByText(title)).toBeTruthy());
+    expect(screen.getByTestId("auth-email").props.value).toBe(
+      "fixture@example.test",
+    );
+    expect(screen.getByTestId("auth-password").props.value).toBe(
+      "SyntheticPassword",
+    );
+    expect(!!screen.queryByRole("button", { name: t("verification") })).toBe(
+      verify,
+    );
+    expect(screen.queryByText("Unexpected private policy response")).toBeNull();
+    expect(
+      requests.filter((request) => request.url.endsWith("/auth/login")),
+    ).toHaveLength(1);
+    screen.unmount();
+  },
+);
 
 it.each(["validation", "network"])(
   "preserves the form and displays a %s failure after asynchronous credential cleanup",
@@ -277,12 +360,17 @@ it("shows a public configuration failure and retries to replace Workspace with b
     throw new TypeError("Fixture offline");
   };
   const screen = await open();
-  expect(screen.getByLabelText("Workspace")).toBeTruthy();
+  expect(screen.UNSAFE_queryAllByType(Image)).toHaveLength(0);
   expect(screen.getByText(t("connection"))).toBeTruthy();
   respond = normalResponse;
   fireEvent.press(screen.getByRole("button", { name: t("retry") }));
   await waitFor(() =>
-    expect(screen.getByLabelText("Knit Infotech")).toBeTruthy(),
+    expect(
+      screen.UNSAFE_getAllByType(Image).map((image) => image.props.source.uri),
+    ).toEqual([
+      "https://up.knitinfotech.com" +
+        fixtures.configuration.data.branding.compact_logo,
+    ]),
   );
   expect(screen.queryByText(t("connection"))).toBeNull();
   expect(requests).toHaveLength(2);

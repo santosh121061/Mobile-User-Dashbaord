@@ -153,6 +153,8 @@ async function response(request: Request) {
         ...pushFixtures.push_preferences.data,
         enabled,
         provider: {
+          available: readyProvider,
+          unavailable_reason: readyProvider ? null : "unconfigured",
           ...pushFixtures.push_preferences.data.provider,
           status: readyProvider ? "ready" : "unconfigured",
           project_id: readyProvider
@@ -344,6 +346,36 @@ it("never requests permission or an Expo token when provider configuration is un
       "Push notifications are unavailable for this app. Contact your administrator.",
     ),
   ).toBeTruthy();
+});
+it("honors feature availability while preserving the provider's ready configuration status", async () => {
+  handler = async (request) => {
+    const original = await response(request);
+    if (
+      !new URL(request.url).pathname.endsWith("/push/preferences") ||
+      request.method !== "GET"
+    )
+      return original;
+    const body = await original.json();
+    return json({
+      data: {
+        ...body.data,
+        provider: {
+          ...body.data.provider,
+          available: false,
+          unavailable_reason: "in_app_disabled",
+        },
+      },
+    });
+  };
+  const screen = await signedIn();
+  await waitFor(() => expect(push?.preferences?.provider.status).toBe("ready"));
+  expect(screen.getByText("In-app notifications are disabled.")).toBeTruthy();
+  await act(async () => {
+    await push!.change(true);
+  });
+  expect(Notifications.requestPermissionsAsync).not.toHaveBeenCalled();
+  expect(Notifications.getExpoPushTokenAsync).not.toHaveBeenCalled();
+  expect(calls("/mobile/devices")).toHaveLength(0);
 });
 it("registers after explicit opt-in, disables SDK auto-registration and never persists the Expo token", async () => {
   jest.mocked(Notifications.getPermissionsAsync).mockResolvedValue({
@@ -625,7 +657,12 @@ it("purges fresh cached Activity detail and denies its tap when audit is disable
       },
     }),
   );
-  await waitFor(() => expect(router.push).toHaveBeenCalledWith("/unavailable"));
+  await waitFor(() =>
+    expect(router.push).toHaveBeenCalledWith({
+      pathname: "/unavailable",
+      params: { account: "1", retry: "/activity/9" },
+    }),
+  );
   expect(router.push).not.toHaveBeenCalledWith("/activity/9");
   expect(calls("/mobile/bootstrap")).toHaveLength(bootstraps + 1);
   expect(calls("/destination")).toHaveLength(1);

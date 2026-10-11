@@ -9,9 +9,14 @@ import { z } from "zod";
 import { api, ApiError, unwrap } from "@/api/client";
 import { useRead } from "@/api/hooks";
 import { envelope, userSchema } from "@/api/runtime";
-import { targetSchema, creationSchema } from "@/api/contracts";
+import {
+  targetSchema,
+  creationSchema,
+  passwordLinkUserCreateSchema,
+} from "@/api/contracts";
+import type { UserRecord } from "@/api/runtime";
 import { useBootstrap } from "@/auth/session";
-import { useFeatureConfirmation } from "@/features/use-feature-confirmation";
+import { useFeatureAction } from "@/features/use-feature-action";
 import { applyFieldErrors, useDiscard, useTitle } from "@/components/forms";
 import {
   Button,
@@ -34,25 +39,35 @@ type Values = {
   first_name: string;
   last_name: string;
   phone: string;
-  password: string;
   status: "enabled" | "disabled";
+  lifecycle_status: "active" | "pending" | "suspended" | "disabled";
   role_ids: number[];
   owner: boolean;
 };
 export default function UserForm({ id }: { id?: string }) {
   const snapshot = useBootstrap();
   return (
-    <UserFormEditor key={snapshot.account.id + ":" + (id ?? "new")} id={id} />
+    <UserFormEditor
+      key={[
+        snapshot.account.id,
+        snapshot.access_revision,
+        snapshot.configuration_revision,
+        snapshot.availability_revision,
+        id ?? "new",
+      ].join(":")}
+      id={id}
+    />
   );
 }
 function UserFormEditor({ id }: { id?: string }) {
   const { width, height } = useWindowDimensions();
   const { colors } = useTheme();
   const snapshot = useBootstrap();
-  const confirm = useFeatureConfirmation();
+  const runAction = useFeatureAction();
   const work = useFeatureWork();
   const { error } = work;
   const [saved, setSaved] = useState(false);
+  const [created, setCreated] = useState<UserRecord | null>(null);
   useTitle(id ? "Edit details" : "New user");
   const query = useRead(
     "user",
@@ -65,7 +80,7 @@ function UserFormEditor({ id }: { id?: string }) {
         }),
         envelope(targetSchema),
       ).data,
-    !!id && !!snapshot.modules.users,
+    !!id && !!snapshot.features["api.enabled"] && !!snapshot.modules.users,
   );
   const creation = useRead(
     "user-create",
@@ -75,7 +90,11 @@ function UserFormEditor({ id }: { id?: string }) {
         await api.GET("/v1/mobile/users/create-context", { signal }),
         envelope(creationSchema),
       ).data,
-    !id && !!snapshot.actions["users.create"],
+    !id &&
+      !!snapshot.features["api.enabled"] &&
+      !!snapshot.actions["users.create"] &&
+      !!snapshot.features["account.email.enabled"] &&
+      !!snapshot.features["account.recovery.enabled"],
   );
   const roleOptions = id
     ? query.data?.role_options
@@ -87,8 +106,8 @@ function UserFormEditor({ id }: { id?: string }) {
       first_name: "",
       last_name: "",
       phone: "",
-      password: "",
       status: "enabled",
+      lifecycle_status: "pending",
       role_ids: [],
       owner: false,
     },
@@ -105,7 +124,11 @@ function UserFormEditor({ id }: { id?: string }) {
           phone: query.data.user.phone ?? "",
           status: query.data.user.status ?? "enabled",
           role_ids: query.data.user.roles?.map((role) => Number(role.id)) ?? [],
-          password: "",
+          lifecycle_status:
+            query.data.user.lifecycle_status === "archived"
+              ? "disabled"
+              : (query.data.user.lifecycle_status ??
+                (query.data.user.status === "enabled" ? "active" : "disabled")),
           owner: query.data.governance?.owner ?? false,
         },
         { keepDirtyValues: true },
@@ -115,6 +138,9 @@ function UserFormEditor({ id }: { id?: string }) {
   const dirtyFields = form.formState.dirtyFields;
   const editable = (field: string) =>
     snapshot.fields[field]?.edit &&
+    (!id ||
+      !["status", "roles"].includes(field) ||
+      !(query.data?.governance?.owner || query.data?.user.is_owner)) &&
     (field !== "status" || !id || query.data?.actions.status) &&
     (field !== "roles" ||
       (snapshot.actions["users.roles"] && (!id || query.data?.actions.roles)));
@@ -130,21 +156,25 @@ function UserFormEditor({ id }: { id?: string }) {
         for (const key of ["email", "phone"] as const)
           if (editable(key) && (!id || form.formState.dirtyFields[key]))
             body[key] = values[key] || null;
-        if (editable("status") && (!id || form.formState.dirtyFields.status))
+        if (
+          id &&
+          query.data?.user.lifecycle_status &&
+          editable("status") &&
+          dirtyFields.lifecycle_status
+        )
+          body.lifecycle_status = values.lifecycle_status;
+        else if (id && editable("status") && form.formState.dirtyFields.status)
           body.status = values.status;
         if (editable("roles") && (!id || form.formState.dirtyFields.role_ids))
           body.role_ids = values.role_ids;
-        if (!id || query.data?.actions.reset)
-          if (values.password) body.password = values.password;
         if (
-          (!id && creation.data?.can_create_owner) ||
-          (id &&
-            query.data?.actions.owner &&
-            query.data.governance?.membership_change_allowed)
+          id &&
+          query.data?.actions.owner &&
+          query.data.governance?.membership_change_allowed
         )
           if ((!id && values.owner) || form.formState.dirtyFields.owner)
             body.owner = values.owner;
-        await confirm(
+        const result = await runAction(
           scope,
           id ? "PUT" : "POST",
           id ? `/api/v1/users/${id}` : "/api/v1/users",
@@ -161,14 +191,17 @@ function UserFormEditor({ id }: { id?: string }) {
                 )
               : unwrap(
                   await api.POST("/v1/users", {
-                    body: {
-                      name: values.name,
+                    body: passwordLinkUserCreateSchema.parse({
+                      first_name: values.first_name.trim(),
+                      last_name: values.last_name.trim(),
                       email: values.email,
-                      status: values.status,
+                      phone: values.phone.trim(),
+                      lifecycle_status: editable("status")
+                        ? values.lifecycle_status
+                        : "pending",
                       role_ids: editable("roles") ? values.role_ids : [],
-                      password: values.password,
-                      ...body,
-                    },
+                      provisioning: "password_link",
+                    }),
 
                     signal,
                   }),
@@ -178,18 +211,53 @@ function UserFormEditor({ id }: { id?: string }) {
         scope.assertCurrent();
         setSaved(true);
         form.reset(values);
-        router.back();
+        if (id) router.back();
+        else setCreated(result.data);
       },
       (failure) => applyFieldErrors(form, failure, Object.keys(values)),
     ),
   );
   if (
+    !snapshot.features["api.enabled"] ||
     (id && !snapshot.modules.users) ||
     (!id && !snapshot.actions["users.create"])
   )
     return (
       <Screen>
         <ErrorState error={new ApiError(403, {}, null)} />
+      </Screen>
+    );
+  if (
+    !id &&
+    (!["first_name", "last_name", "email", "phone"].every(editable) ||
+      !snapshot.features["account.email.enabled"] ||
+      !snapshot.features["account.recovery.enabled"])
+  )
+    return (
+      <Screen>
+        <ErrorState error={new ApiError(403, {}, null)} />
+      </Screen>
+    );
+  if (created)
+    return (
+      <Screen scroll>
+        <Card>
+          <Label size="title" accessibilityRole="header">
+            User created
+          </Label>
+          <Label>Password setup was requested by email.</Label>
+          <Label>
+            Pending accounts still require administrator activation after
+            password setup.
+          </Label>
+          {snapshot.modules.users && (
+            <Button
+              label={t("detail")}
+              onPress={() => router.replace(`/users/${created.id}`)}
+            />
+          )}
+          <Button label="Done" onPress={() => router.back()} />
+        </Card>
       </Screen>
     );
   if ((id && query.isPending) || (!id && creation.isPending))
@@ -285,12 +353,23 @@ function UserFormEditor({ id }: { id?: string }) {
             width: "100%",
             maxWidth: 550,
             alignSelf: "center",
-            padding: 18,
-            gap: 18,
+            gap: 15,
           }}
+          formSection
+          heading={t("personalDetails")}
         >
-          <Label size="bodyMedium">{t("personalDetails")}</Label>
-          {(["name", "email", "first_name", "last_name", "phone"] as const)
+          {(!id
+            ? (["first_name", "last_name", "email", "phone"] as const)
+            : ([
+                ...(!editable("first_name") && !editable("last_name")
+                  ? (["name"] as const)
+                  : []),
+                "first_name",
+                "last_name",
+                "email",
+                "phone",
+              ] as const)
+          )
             .filter(editable)
             .map((key) => (
               <Controller
@@ -298,10 +377,7 @@ function UserFormEditor({ id }: { id?: string }) {
                 name={key}
                 control={form.control}
                 rules={{
-                  required:
-                    !id && ["name", "email"].includes(key)
-                      ? t("validation")
-                      : false,
+                  required: !id ? t("validation") : false,
                   maxLength:
                     key === "email"
                       ? 254
@@ -313,8 +389,18 @@ function UserFormEditor({ id }: { id?: string }) {
                   validate:
                     key === "email"
                       ? (value) =>
-                          z.email().safeParse(value).success || t("validation")
-                      : undefined,
+                          (!/[\u0000-\u001f\u007f]/.test(value) &&
+                            z
+                              .email({ pattern: z.regexes.rfc5322Email })
+                              .safeParse(value.trim()).success) ||
+                          t("validation")
+                      : key === "phone" && !id
+                        ? (value) =>
+                            /^\+[1-9][0-9]{6,14}$/.test(value.trim()) ||
+                            "Use an international number, such as +919876543210."
+                        : !id && ["first_name", "last_name"].includes(key)
+                          ? (value) => !!value.trim() || t("validation")
+                          : undefined,
                 }}
                 render={({
                   field: { ref, value, onChange, onBlur },
@@ -326,7 +412,7 @@ function UserFormEditor({ id }: { id?: string }) {
                       key === "name"
                         ? "Full name"
                         : key === "email"
-                          ? "Email address"
+                          ? "Work email"
                           : t(key)
                     }
                     placeholder={
@@ -334,9 +420,26 @@ function UserFormEditor({ id }: { id?: string }) {
                         ? "e.g. Ananya Kapoor"
                         : key === "email"
                           ? "name@company.com"
+                          : key === "first_name"
+                            ? id
+                              ? "First name"
+                              : "e.g. Ananya"
+                            : key === "last_name"
+                              ? id
+                                ? "Last name"
+                                : "e.g. Kapoor"
+                              : key === "phone"
+                                ? "+91 98765 43210"
+                                : undefined
+                    }
+                    help={
+                      key === "email" && !id
+                        ? "Use their work email address."
+                        : key === "phone"
+                          ? "Include country code for reliable contact."
                           : undefined
                     }
-                    required={!id && ["name", "email"].includes(key)}
+                    required={!id}
                     value={value}
                     editable={!work.busy}
                     onChangeText={onChange}
@@ -355,16 +458,25 @@ function UserFormEditor({ id }: { id?: string }) {
               />
             ))}
         </Card>
-        <Card style={{ padding: 18, gap: 18 }}>
-          <Label size="bodyMedium">{t("workspaceAccess")}</Label>
+        <Card formSection heading={t("workspaceAccess")} style={{ gap: 15 }}>
           {editable("roles") && roleOptions && (
             <>
               <Controller
                 name="role_ids"
                 control={form.control}
-                render={({ field }) => (
+                rules={{
+                  validate: (value) =>
+                    (value.length <= 20 &&
+                      new Set(value).size === value.length &&
+                      value.every((id) =>
+                        roleOptions.some((role) => Number(role.id) === id),
+                      )) ||
+                    t("validation"),
+                }}
+                render={({ field, fieldState }) => (
                   <SelectionField
                     label="Role"
+                    error={fieldState.error?.message}
                     value={roleOptions
                       .filter((role) => field.value.includes(Number(role.id)))
                       .map((role) => role.name)
@@ -393,17 +505,21 @@ function UserFormEditor({ id }: { id?: string }) {
               />
             </>
           )}
-          {editable("status") && (
+          {(!id || query.data?.user.lifecycle_status) && editable("status") ? (
             <Controller
-              name="status"
+              name="lifecycle_status"
               control={form.control}
-              render={({ field }) => (
+              render={({ field, fieldState }) => (
                 <SelectionField
                   label="Account status"
+                  error={fieldState.error?.message}
                   value={t(field.value)}
                   disabled={work.busy}
                 >
-                  {(["enabled", "disabled"] as const).map((value) => (
+                  {(!id
+                    ? (["pending", "active"] as const)
+                    : (["active", "pending", "suspended", "disabled"] as const)
+                  ).map((value) => (
                     <Chip
                       key={value}
                       label={t(value)}
@@ -415,39 +531,39 @@ function UserFormEditor({ id }: { id?: string }) {
                 </SelectionField>
               )}
             />
+          ) : (
+            id &&
+            editable("status") && (
+              <Controller
+                name="status"
+                control={form.control}
+                render={({ field }) => (
+                  <SelectionField
+                    label="Account status"
+                    value={t(field.value)}
+                    disabled={work.busy}
+                  >
+                    {(["enabled", "disabled"] as const).map((value) => (
+                      <Chip
+                        key={value}
+                        label={t(value)}
+                        selected={field.value === value}
+                        disabled={work.busy}
+                        onPress={() => field.onChange(value)}
+                      />
+                    ))}
+                  </SelectionField>
+                )}
+              />
+            )
           )}
-          {(!id || query.data?.actions.reset) && (
-            <Controller
-              name="password"
-              control={form.control}
-              rules={{
-                required: !id ? t("validation") : false,
-                minLength: {
-                  value: 12,
-                  message: t("passwordHint"),
-                },
-              }}
-              render={({
-                field: { ref, value, onChange, onBlur },
-                fieldState,
-              }) => (
-                <Input
-                  ref={ref}
-                  label={t("password")}
-                  value={value}
-                  editable={!work.busy}
-                  onChangeText={onChange}
-                  onBlur={onBlur}
-                  secureTextEntry
-                  autoComplete="new-password"
-                  error={fieldState.error?.message}
-                  help={t("passwordHint")}
-                />
-              )}
-            />
+          {!id && (
+            <Label size="caption" tone="secondary">
+              A password setup link will be sent by email. Pending accounts
+              require administrator activation.
+            </Label>
           )}
-          {((!id && creation.data?.can_create_owner) ||
-            (id && query.data?.actions.owner && query.data.governance)) && (
+          {id && query.data?.actions.owner && query.data.governance && (
             <>
               <Label>{t("ownerMembership")}</Label>
               <Controller

@@ -3,7 +3,7 @@ import { IconButton } from "@/components/visuals";
 import { Sheet } from "@/components/sheet";
 import { useEffect, useRef, useState } from "react";
 import { router } from "expo-router";
-import { Platform } from "react-native";
+import { Platform, type ViewStyle } from "react-native";
 import { File, Paths } from "expo-file-system";
 import * as Sharing from "expo-sharing";
 import { z } from "zod";
@@ -61,12 +61,24 @@ export function ExportButton({
   variant = "secondary",
   iconOnly = false,
   displayLabel,
+  label,
+  selection = { mode: "all", excluded: [] },
+  disabled = false,
+  compact = false,
+  buttonStyle,
 }: {
   resource: Resource;
   criteria?: Record<string, string>;
-  variant?: "secondary" | "tertiary";
+  variant?: "secondary" | "tertiary" | "outline";
   iconOnly?: boolean;
   displayLabel?: string;
+  label?: string;
+  selection?:
+    | { mode: "selected"; ids: readonly number[] }
+    | { mode: "all"; excluded: readonly number[] };
+  disabled?: boolean;
+  compact?: boolean;
+  buttonStyle?: ViewStyle;
 }) {
   const snapshot = useBootstrap();
   const { captureWork } = useSession();
@@ -92,7 +104,14 @@ export function ExportButton({
   }, []);
   const permitted = exportResourceAllowed(resource, snapshot);
   const start = async () => {
-    if (busy || active.current) return;
+    if (
+      busy ||
+      active.current ||
+      disabled ||
+      !permitted ||
+      (selection.mode === "selected" && !selection.ids.length)
+    )
+      return;
     let scope: PrivateWork;
     try {
       scope = captureWork();
@@ -110,12 +129,22 @@ export function ExportButton({
     setBusy(true);
     setError(null);
     try {
+      const chosen =
+        selection.mode === "selected"
+          ? {
+              mode: "selected" as const,
+              ids: z
+                .array(z.number().int().positive().safe())
+                .min(1)
+                .parse([...new Set(selection.ids)]),
+            }
+          : { mode: "all" as const, excluded: [...selection.excluded] };
       const response = await api.POST("/v1/exports/{resource}", {
         params: { path: { resource } },
         body: {
           criteria,
           columns: selected.filter((field) => available.includes(field)),
-          selection: { mode: "all", excluded: [] },
+          selection: chosen,
         },
         parseAs: "arrayBuffer",
         signal: scope.signal,
@@ -148,17 +177,24 @@ export function ExportButton({
       {!open ? (
         iconOnly ? (
           <IconButton
-            label={t(
-              resource === "users"
-                ? "exportUsers"
-                : resource === "roles"
-                  ? "exportRoles"
-                  : resource === "audit"
-                    ? "exportAudit"
-                    : resource === "notifications"
-                      ? "exportInbox"
-                      : "reports",
-            )}
+            disabled={
+              disabled ||
+              (selection.mode === "selected" && !selection.ids.length)
+            }
+            label={
+              label ??
+              t(
+                resource === "users"
+                  ? "exportUsers"
+                  : resource === "roles"
+                    ? "exportRoles"
+                    : resource === "audit"
+                      ? "exportAudit"
+                      : resource === "notifications"
+                        ? "exportInbox"
+                        : "reports",
+              )
+            }
             onPress={() => {
               setSelected(available);
               setOpen(true);
@@ -169,17 +205,26 @@ export function ExportButton({
         ) : (
           <Button
             displayLabel={displayLabel}
-            label={t(
-              resource === "users"
-                ? "exportUsers"
-                : resource === "roles"
-                  ? "exportRoles"
-                  : resource === "audit"
-                    ? "exportAudit"
-                    : resource === "notifications"
-                      ? "exportInbox"
-                      : "reports",
-            )}
+            compact={compact}
+            style={buttonStyle}
+            disabled={
+              disabled ||
+              (selection.mode === "selected" && !selection.ids.length)
+            }
+            label={
+              label ??
+              t(
+                resource === "users"
+                  ? "exportUsers"
+                  : resource === "roles"
+                    ? "exportRoles"
+                    : resource === "audit"
+                      ? "exportAudit"
+                      : resource === "notifications"
+                        ? "exportInbox"
+                        : "reports",
+              )
+            }
             variant={variant}
             onPress={() => {
               setSelected(available);
@@ -190,6 +235,7 @@ export function ExportButton({
       ) : (
         <Sheet
           title={t("reports")}
+          closeDisabled={busy}
           close={() => {
             if (!busy) setOpen(false);
           }}
@@ -202,6 +248,7 @@ export function ExportButton({
                 snapshot.fields[field]?.label ?? field.replaceAll("_", " ")
               }
               selected={selected.includes(field)}
+              disabled={busy}
               onPress={() =>
                 setSelected((old) =>
                   old.includes(field)

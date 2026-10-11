@@ -1,3 +1,5 @@
+import { regexes } from "zod";
+
 export function routeForIntent(
   path: string,
   scheme = "userdashboard-dev",
@@ -34,6 +36,17 @@ export type MobileIntent =
   | { kind: "reset"; email: string; token: string }
   | { kind: "verify"; url: string };
 
+/** Carry only an already validated read-only destination and its owning account. */
+export function unavailableHref(route: string, account: string) {
+  const safe = routeForIntent(route);
+  return safe === "/unavailable"
+    ? ("/unavailable" as const)
+    : {
+        pathname: "/unavailable" as const,
+        params: { retry: safe, account },
+      };
+}
+
 /** Parse only the configured application's routes. Secrets never become router parameters. */
 export function parseIntent(
   path: string,
@@ -44,11 +57,13 @@ export function parseIntent(
   if (
     path.length > 2048 ||
     path.includes("..") ||
-    /[\\\u0000-\u001f]/.test(path) ||
+    /[\\\u0000-\u0020]/.test(path) ||
     /%(?:2f|5c|2e)/i.test(path)
   )
     return null;
   try {
+    // URLSearchParams repairs malformed escapes/UTF-8; validate without decoding twice.
+    decodeURIComponent(path);
     const base = new URL(webBase);
     const url = new URL(path, base.origin);
     const custom = url.protocol === scheme + ":";
@@ -75,7 +90,8 @@ export function parseIntent(
       unique(["email"]) &&
       email &&
       email.length <= 254 &&
-      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+      !/[\u0000-\u001f\u007f]/.test(email) &&
+      regexes.rfc5322Email.test(email)
     ) {
       return { kind: "reset", email, token: reset[1]! };
     }

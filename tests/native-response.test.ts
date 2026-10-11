@@ -1,7 +1,12 @@
 import { z } from "zod";
 import { FetchResponse } from "../node_modules/expo/src/winter/fetch/FetchResponse";
 import { api, attachSession, ApiError, unwrap } from "../src/api/client";
-import { brandingSchema, envelope, sessionSchema } from "../src/api/runtime";
+import {
+  brandingSchema,
+  envelope,
+  publicConfigurationSchema,
+  sessionSchema,
+} from "../src/api/runtime";
 import { brandAssetUrl } from "../src/components/brand";
 
 jest.mock("expo-constants", () => ({
@@ -82,6 +87,48 @@ class FixtureResponse extends FetchResponse {
 }
 
 afterEach(() => jest.restoreAllMocks());
+
+it("reads the current HTTP 200 public response as API disabled, never as a transport error", async () => {
+  const revision =
+    "76f4d1f6d41faad22b1ad0cf3973fe1ff063d7b84cf195212537084bcdb30494";
+  const response = {
+    data: {
+      schema_version: 1,
+      features: {
+        "account.recovery.enabled": true,
+        "account.verification.enabled": true,
+        "account.require_verified": false,
+        "api.enabled": false,
+      },
+      branding: {
+        name: "Knit Admin",
+        revision,
+        logo: `/branding/logo?v=${revision}`,
+        dark_logo: `/branding/dark_logo?v=${revision}`,
+        compact_logo: `/branding/compact_logo?v=${revision}`,
+        favicon: `/branding/favicon?v=${revision}`,
+      },
+    },
+  };
+  jest.spyOn(global, "fetch").mockResolvedValue(new FixtureResponse(response));
+  const result = await api.GET("/v1/mobile/config");
+  const configuration = unwrap(
+    result,
+    envelope(publicConfigurationSchema),
+  ).data;
+  expect(configuration.features["api.enabled"]).toBe(false);
+  expect(brandAssetUrl(configuration.branding!.favicon)).toBe(
+    `https://up.knitinfotech.com/branding/favicon?v=${revision}`,
+  );
+  expect(publicConfigurationSchema.safeParse({ features: {} }).success).toBe(
+    false,
+  );
+  expect(
+    publicConfigurationSchema.safeParse({
+      features: { "api.enabled": "false" },
+    }).success,
+  ).toBe(false);
+});
 
 it("reads public configuration from Expo's actual native response class, which is not a global Response", async () => {
   attachSession(

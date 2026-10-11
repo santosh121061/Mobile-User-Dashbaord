@@ -22,6 +22,7 @@ const ownerKey = (snapshot: Bootstrap) =>
     snapshot.account.id,
     snapshot.access_revision,
     snapshot.configuration_revision,
+        snapshot.availability_revision,
   ].join(":");
 const emit = () => listeners.forEach((listener) => listener());
 const dispose = (entry: Entry) => {

@@ -1,7 +1,23 @@
 import { ApiError, ApiTransportError } from "../src/api/client";
 import { loginFeedback } from "../src/auth/login-feedback";
+import { z } from "zod";
+import { t } from "../src/localization";
 
 const credentials = "The supplied credentials could not be authenticated.";
+it("distinguishes invalid login JSON/schema and TLS failures from ordinary connectivity", () => {
+  const parsed = z.object({ access_token: z.string() }).safeParse({});
+  expect(parsed.success).toBe(false);
+  if (!parsed.success)
+    expect(loginFeedback(parsed.error).title).toBe(t("invalidResponse"));
+  expect(loginFeedback(new SyntaxError("Private HTML response")).title).toBe(
+    t("invalidResponse"),
+  );
+  const feedback = loginFeedback(
+    new ApiTransportError("tls", new Error("Private certificate error")),
+  );
+  expect(feedback.title).toBe(t("secureConnectionFailed"));
+  expect(JSON.stringify(feedback)).not.toMatch(/Private|Check your connection/);
+});
 it("maps Laravel's shared credential rejection without revealing account status", () => {
   const feedback = loginFeedback(
     new ApiError(

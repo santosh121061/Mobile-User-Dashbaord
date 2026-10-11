@@ -15,7 +15,7 @@ import {
 import { ScrollView, Text, View } from "react-native";
 import fixtures from "../api/fixtures.json";
 import { bootstrapSchema, type Bootstrap } from "../src/api/runtime";
-import { ApiError } from "../src/api/client";
+import { ApiError, ApiTransportError } from "../src/api/client";
 import { AvailabilityState, ErrorState, Screen } from "../src/components/ui";
 import { attachDatePreferences, date, t } from "../src/localization";
 import {
@@ -241,12 +241,42 @@ it("distinguishes maintenance from confirmed API-off and honors its retry delay"
       <AvailabilityState apiDisabled retry={retry} logout={logout} />,
     );
     expect(screen.queryByText("Service temporarily unavailable")).toBeNull();
+    expect(screen.getByText(t("apiDisabledHint"))).toBeTruthy();
+    expect(screen.queryByText(t("connectionHint"))).toBeNull();
     fireEvent.press(screen.getByRole("button", { name: t("logout") }));
     expect(logout).toHaveBeenCalledTimes(1);
     screen.unmount();
   } finally {
     jest.useRealTimers();
   }
+});
+
+it("shows a fresh response failure even when the last confirmed configuration disabled the API", () => {
+  const screen = render(
+    <AvailabilityState
+      apiDisabled
+      error={new SyntaxError("Private gateway response")}
+      retry={jest.fn()}
+      logout={jest.fn()}
+    />,
+  );
+  expect(screen.getByText(t("invalidResponse"))).toBeTruthy();
+  expect(screen.queryByText(t("apiDisabled"))).toBeNull();
+  expect(screen.queryByText(t("connectionHint"))).toBeNull();
+  expect(screen.queryByText("Private gateway response")).toBeNull();
+});
+
+it("distinguishes a secure transport failure without revealing the native exception", () => {
+  const screen = render(
+    <ErrorState
+      error={
+        new ApiTransportError("tls", new Error("Private certificate details"))
+      }
+    />,
+  );
+  expect(screen.getByText(t("secureConnectionFailed"))).toBeTruthy();
+  expect(screen.queryByText(t("connectionHint"))).toBeNull();
+  expect(screen.queryByText("Private certificate details")).toBeNull();
 });
 
 it("installs one theme-colored pull refresh control on the shared scroll screen", () => {

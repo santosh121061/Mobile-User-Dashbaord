@@ -1,4 +1,4 @@
-import { View } from "react-native";
+import { View, useWindowDimensions } from "react-native";
 import type { LucideIcon } from "lucide-react-native";
 import { Label } from "./ui";
 import { useTheme } from "@/theme";
@@ -16,6 +16,8 @@ export function FormIntro({
   prominent?: boolean;
 }) {
   const { colors } = useTheme();
+  const { width } = useWindowDimensions();
+  const narrow = width < 370;
   const foreground =
     tone === "blue" ? colors.brand.primary : colors.accent[tone];
   const background =
@@ -25,16 +27,16 @@ export function FormIntro({
       style={{
         flexDirection: "row",
         alignItems: "center",
-        gap: 12,
-        minHeight: 48,
-        marginBottom: prominent ? 0 : 7,
+        gap: narrow ? 9 : 12,
+        minHeight: narrow ? 38 : 44,
+        marginBottom: prominent ? 0 : narrow ? 2 : 9,
       }}
     >
       <View
         style={{
-          width: prominent ? 55 : 48,
-          height: prominent ? 55 : 48,
-          borderRadius: prominent ? 18 : 16,
+          width: prominent ? 55 : narrow ? 38 : 44,
+          height: prominent ? 55 : narrow ? 38 : 44,
+          borderRadius: prominent ? 18 : narrow ? 10 : 13,
           backgroundColor: background,
           alignItems: "center",
           justifyContent: "center",
@@ -43,8 +45,21 @@ export function FormIntro({
         <Icon size={24} strokeWidth={1.8} color={foreground} />
       </View>
       <View style={{ flex: 1, gap: prominent ? 4 : 2 }}>
-        <Label size={prominent ? "h1" : "title"}>{title}</Label>
-        <Label size="secondary" tone="secondary">
+        <Label
+          size={prominent ? "h1" : "title"}
+          style={
+            narrow && !prominent ? { fontSize: 16, lineHeight: 21 } : undefined
+          }
+        >
+          {title}
+        </Label>
+        <Label
+          size="secondary"
+          tone="secondary"
+          style={
+            narrow && !prominent ? { fontSize: 11, lineHeight: 16 } : undefined
+          }
+        >
           {subtitle}
         </Label>
       </View>

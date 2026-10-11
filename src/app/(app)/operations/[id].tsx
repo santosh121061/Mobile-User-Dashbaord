@@ -194,7 +194,7 @@ function OperationDetail({ id }: { id: string }) {
                     t(query.data.kind === "bulk" ? "bulk" : "reports")}
                 </Label>
               </Card>
-              <Label size="title">Details</Label>
+              <Label size="section">Details</Label>
               <Card
                 style={{ gap: 0, paddingHorizontal: 16, paddingVertical: 2 }}
               >

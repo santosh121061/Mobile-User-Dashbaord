@@ -17,8 +17,8 @@ export function NavigationGlyph({
   return (
     <SvgXml
       accessible={false}
-      width={25}
-      height={25}
+      width={20}
+      height={20}
       xml={`<svg viewBox="0 0 24 24" fill="${color}">${paths[name]}</svg>`}
     />
   );

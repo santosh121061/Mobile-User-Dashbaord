@@ -39,10 +39,10 @@ export type ReadPolicy = {
     refetchOnWindowFocus?: boolean;
     refetchOnReconnect?: boolean;
 };
-export function usePages<T extends { id: string }>(
+export function usePages<P extends Page<{ id: string }>>(
     module: string,
     criteria: unknown,
-    read: (page: number, signal: AbortSignal) => Promise<Page<T>>,
+    read: (page: number, signal: AbortSignal) => Promise<P>,
     permitted = true,
     policy: ReadPolicy = {},
 ) {
@@ -60,5 +60,8 @@ export function usePages<T extends { id: string }>(
             return current < last ? current + 1 : undefined;
         },
     });
-    return { ...query, rows: uniqueRows(query.data?.pages ?? []) };
+    return {
+        ...query,
+        rows: uniqueRows<P["data"][number]>(query.data?.pages ?? []),
+    };
 }

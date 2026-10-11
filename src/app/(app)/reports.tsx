@@ -116,7 +116,7 @@ function ReportHub() {
                   <FileChartColumn size={22} color={colors.brand.primary} />
                 )}
               </View>
-              <Label accessibilityRole="header" size="title">
+              <Label accessibilityRole="header" size="section">
                 {resource.resource === "users"
                   ? "User directory"
                   : resource.resource === "audit"
@@ -138,7 +138,7 @@ function ReportHub() {
             </Card>
           ))}
         </View>
-        <Label accessibilityRole="header" size="title">
+        <Label accessibilityRole="header" size="section">
           {t("sessionOperations")}
         </Label>
         <Label size="caption" tone="secondary">

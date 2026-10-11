@@ -11,9 +11,7 @@ tags: [critical, isolated, writes]
 - extendedWaitUntil:
     visible: First name
     timeout: 15000
-- tapOn: Name
-- inputText: Maestro Fixture
-- tapOn: Email
+- tapOn: Work email
 - inputText: ${MAESTRO_CREATE_EMAIL}
 - tapOn: First name
 - inputText: Maestro
@@ -21,27 +19,21 @@ tags: [critical, isolated, writes]
 - inputText: Fixture
 - scrollUntilVisible:
     element:
-      text: Password
+      text: Phone number
     direction: DOWN
-- tapOn: Password
-- inputText: ${MAESTRO_PASSWORD}
+- tapOn: Phone number
+- inputText: +12025550199
 - hideKeyboard
 - scrollUntilVisible:
     element:
-      text: Save changes
+      text: Create user
     direction: DOWN
-- tapOn: Save changes
-- runFlow: ../helpers/confirm.yaml
+- tapOn: Create user
 - extendedWaitUntil:
-    visible: Search
+    visible: User created
     timeout: 15000
-- tapOn: Search
-- inputText: ${MAESTRO_CREATE_EMAIL}
-- hideKeyboard
-- extendedWaitUntil:
-    visible: Maestro Fixture.*
-    timeout: 15000
-- tapOn: Maestro Fixture.*
+- assertVisible: .*Pending accounts still require administrator activation.*
+- tapOn: User details
 - tapOn: Edit user
 - scrollUntilVisible:
     element:
@@ -51,15 +43,15 @@ tags: [critical, isolated, writes]
     visible: Phone number
     timeout: 15000
 - tapOn: Phone number
-- inputText: +12025550199
+- eraseText: 100
+- inputText: +12025550198
 - hideKeyboard
 - scrollUntilVisible:
     element:
       text: Save changes
     direction: DOWN
 - tapOn: Save changes
-- runFlow: ../helpers/confirm.yaml
 - extendedWaitUntil:
     visible: User details
     timeout: 15000
-- assertVisible: "+12025550199"
+- assertVisible: "+12025550198"

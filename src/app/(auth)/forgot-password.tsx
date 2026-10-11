@@ -1,4 +1,4 @@
-import { Mail, ArrowRight } from "lucide-react-native";
+import { Mail, MailCheck, ArrowRight } from "lucide-react-native";
 import React, { useState } from "react";
 import { Pressable, View } from "react-native";
 import { useRouter } from "expo-router";
@@ -22,6 +22,7 @@ export default function ForgotPassword() {
     setAttempted(true);
     if (busy || !z.email().safeParse(email.trim()).success) return;
     setBusy(true);
+    setError(null);
     try {
       check(
         await api.POST("/v1/auth/forgot-password", {
@@ -38,29 +39,48 @@ export default function ForgotPassword() {
   return (
     <AuthFrame
       barTitle="Account recovery"
-      title={t("forgot")}
-      subtitle="Enter your work email to request a reset link."
-      icon={Mail}
+      title={sent ? "Check your email" : t("forgot")}
+      subtitle={
+        sent ? undefined : "Enter your work email to request a reset link."
+      }
+      icon={sent ? MailCheck : Mail}
     >
       <AuthCard>
-        <Input
-          label="Email address"
-          required
-          error={
-            attempted && !z.email().safeParse(email.trim()).success
-              ? t("validation")
-              : undefined
-          }
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          autoComplete="email"
-          placeholder={t("emailPlaceholder")}
-        />
+        {!sent && (
+          <Input
+            label="Email address"
+            required
+            error={
+              attempted && !z.email().safeParse(email.trim()).success
+                ? t("validation")
+                : undefined
+            }
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoComplete="email"
+            placeholder={t("emailPlaceholder")}
+          />
+        )}
         {!!error && <ErrorState error={error} />}
         {sent ? (
-          <Label accessibilityLiveRegion="polite">{t("recoverySent")}</Label>
+          <>
+            <Label accessibilityLiveRegion="polite">{t("recoverySent")}</Label>
+            <Button
+              label="Back to sign in"
+              onPress={() => router.replace("/(auth)/login")}
+            />
+            <Button
+              label="Send another link"
+              variant="tertiary"
+              onPress={() => {
+                setSent(false);
+                setAttempted(false);
+                setError(null);
+              }}
+            />
+          </>
         ) : (
           <Button
             label="Send reset link"
@@ -72,43 +92,45 @@ export default function ForgotPassword() {
           />
         )}
       </AuthCard>
-      <View
-        style={{
-          marginTop: 24,
-          minHeight: 44,
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "center",
-          flexWrap: "wrap",
-        }}
-      >
-        <Label size="caption" tone="secondary">
-          Remembered your password?{" "}
-        </Label>
-        <Pressable
-          accessibilityRole="link"
-          accessibilityLabel="Sign in"
-          hitSlop={{ left: 4, right: 4 }}
-          onPress={() => router.back()}
+      {!sent && (
+        <View
           style={{
+            marginTop: 24,
             minHeight: 44,
-            paddingVertical: 8,
-            paddingHorizontal: 2,
-            marginStart: 3,
+            flexDirection: "row",
+            alignItems: "center",
             justifyContent: "center",
+            flexWrap: "wrap",
           }}
         >
-          <Label
-            size="caption"
+          <Label size="caption" tone="secondary">
+            Remembered your password?{" "}
+          </Label>
+          <Pressable
+            accessibilityRole="link"
+            accessibilityLabel="Sign in"
+            hitSlop={{ left: 4, right: 4 }}
+            onPress={() => router.replace("/(auth)/login")}
             style={{
-              color: colors.brand.primary,
-              fontFamily: "Inter_600SemiBold",
+              minHeight: 44,
+              paddingVertical: 8,
+              paddingHorizontal: 2,
+              marginStart: 3,
+              justifyContent: "center",
             }}
           >
-            Sign in
-          </Label>
-        </Pressable>
-      </View>
+            <Label
+              size="caption"
+              style={{
+                color: colors.brand.primary,
+                fontFamily: "Inter_600SemiBold",
+              }}
+            >
+              Sign in
+            </Label>
+          </Pressable>
+        </View>
+      )}
     </AuthFrame>
   );
 }

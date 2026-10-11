@@ -12,12 +12,19 @@ import { api } from "../src/api/client";
 const mockReplace = jest.fn();
 let mockFeatures: Record<string, boolean>;
 const mockLogout = jest.fn<Promise<void>, []>(async () => undefined);
+const mockActivate = jest.fn();
+let mockAccount = { lifecycle_status: "active", status: "enabled" };
 jest.mock("expo-router", () => ({
   router: { replace: (...args: unknown[]) => mockReplace(...args) },
   Redirect: () => null,
 }));
 jest.mock("../src/auth/session", () => ({
-  useSession: () => ({ features: mockFeatures, logout: mockLogout }),
+  useSession: () => ({
+    features: mockFeatures,
+    logout: mockLogout,
+    activate: mockActivate,
+    bootstrap: { account: mockAccount },
+  }),
 }));
 jest.mock("../src/api/client", () => ({
   ...jest.requireActual("../src/api/client"),
@@ -44,6 +51,7 @@ beforeEach(() => {
   if (previous) discardIntent(previous);
   takeResetNotice();
   jest.clearAllMocks();
+  mockAccount = { lifecycle_status: "active", status: "enabled" };
   mockFeatures = { "api.enabled": true, "account.recovery.enabled": true };
   jest
     .mocked(api.POST)
@@ -167,6 +175,51 @@ it("sends the existing reset API once, clears local authentication, and returns 
   expect(mockReplace).toHaveBeenCalledWith("/(auth)/login");
   expect(currentIntent()).toBeNull();
   expect(takeResetNotice()).toBe(true);
+  screen.unmount();
+});
+it("keeps an encoded quoted email out of router parameters and forwards its exact decoded value to reset", async () => {
+  const email = '"quoted local"@example.test';
+  expect(
+    receiveIntent(
+      `${base.replace(/\/api$/, "")}/reset-password/${token}?email=${encodeURIComponent(email)}`,
+      "userdashboard-dev",
+      base,
+    ),
+  ).toBe("/(auth)/reset-password");
+  const screen = render(<ResetPassword />);
+  fill(screen);
+  await waitFor(() => expect(mockLogout).toHaveBeenCalledTimes(1));
+  expect(api.POST).toHaveBeenCalledTimes(1);
+  expect(jest.mocked(api.POST).mock.calls[0]).toEqual([
+    "/v1/auth/reset-password",
+    expect.objectContaining({
+      body: expect.objectContaining({ email, token }),
+    }),
+  ]);
+  expect(mockActivate).not.toHaveBeenCalled();
+  screen.unmount();
+});
+it("does not activate a pending account or dispatch reactivation when its password is set", async () => {
+  mockAccount = { lifecycle_status: "pending", status: "disabled" };
+  jest.mocked(api.POST).mockResolvedValueOnce(
+    response({
+      message:
+        "Password reset. Sign in when your account is enabled and eligible.",
+    }) as never,
+  );
+  receiveIntent(link, "userdashboard-dev", base);
+  const screen = render(<ResetPassword />);
+  fill(screen);
+  await waitFor(() => expect(mockLogout).toHaveBeenCalledTimes(1));
+  expect(api.POST).toHaveBeenCalledTimes(1);
+  expect(jest.mocked(api.POST).mock.calls[0]![0]).toBe(
+    "/v1/auth/reset-password",
+  );
+  expect(mockActivate).not.toHaveBeenCalled();
+  expect(mockAccount).toEqual({
+    lifecycle_status: "pending",
+    status: "disabled",
+  });
   screen.unmount();
 });
 it.each(["unmount", "disable"])(
